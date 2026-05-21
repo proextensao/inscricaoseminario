@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Painel de Controle</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+
+  <!-- jsPDF para geração de PDF no browser -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    :root {
+      --bg:       #050505;
+      --surface:  #101010;
+      --surface2: #161616;
+      --gold:     #d4af55;
+      --gold-light:#e7c46d;
+      --border:   rgba(212,175,85,0.18);
+      --text:     #f3efe7;
+      --muted:    rgba(255,255,255,0.45);
+      --green:    #8ff0a4;
+      --red:      #ff7b7b;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+      padding: 40px;
+      overflow-x: hidden;
+    }
+    body::before {
+      content:'';
+      position:fixed;
+      inset:0;
+      background: radial-gradient(ellipse at top, rgba(212,175,85,0.07), transparent 60%);
+      pointer-events:none;
+    }
+
+    /* ── TOPBAR ── */
+    .topbar {
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:30px;
+      margin-bottom:40px;
+      flex-wrap:wrap;
+    }
+    h1 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.6rem,6vw,4.5rem);
+      font-weight:300;
+      line-height:1;
+      margin-bottom:10px;
+    }
+    .subtitle { color:var(--muted); font-size:13px; letter-spacing:0.08em; }
+    .modo-badge {
+      margin-top:14px;
+      display:inline-flex;
+      align-items:center;
+      gap:10px;
+      padding:8px 14px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,0.02);
+      font-size:11px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+    }
+    .modo-dot { width:9px; height:9px; border-radius:50%; background:var(--green); }
+
+    /* ── ACTIONS ── */
+    .top-actions {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .card {
+      background:rgba(255,255,255,0.02);
+      border:1px solid var(--border);
+      padding:20px 26px;
+      border-radius:8px;
+      min-width:200px;
+    }
+    .card-title { color:var(--muted); font-size:10px; margin-bottom:8px; letter-spacing:0.14em; text-transform:uppercase; }
+    .card-number { color:var(--gold); font-size:1.8rem; }
+
+    .btn {
+      background:transparent;
+      border:1px solid var(--border);
+      color:var(--gold);
+      padding:13px 20px;
+      border-radius:6px;
+      cursor:pointer;
+      transition:0.25s;
+      font-family:'DM Mono',monospace;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      font-size:10px;
+      white-space:nowrap;
+    }
+    .btn:hover { background:rgba(212,175,85,0.08); border-color:var(--gold); }
+    .btn.green { border-color:rgba(143,240,164,0.35); color:var(--green); }
+    .btn.green:hover { background:rgba(143,240,164,0.08); border-color:var(--green); }
+    .btn.red { border-color:rgba(255,123,123,0.35); color:var(--red); }
+    .btn.red:hover { background:rgba(255,123,123,0.08); border-color:var(--red); }
+    .btn.blue { border-color:rgba(100,160,255,0.35); color:#7eb8ff; }
+    .btn.blue:hover { background:rgba(100,160,255,0.08); border-color:#7eb8ff; }
+
+    /* ── FILTROS ── */
+    .filters-bar {
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:20px;
+    }
+    .filter-group { display:flex; flex-direction:column; gap:4px; }
+    .filter-group label { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
+    .filter-group input,
+    .filter-group select {
+      background:var(--surface);
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius:4px;
+      font-family:'DM Mono',monospace;
+      font-size:11px;
+      outline:none;
+      transition:0.2s;
+      min-width:160px;
+    }
+    .filter-group input:focus,
+    .filter-group select:focus { border-color:rgba(212,175,85,0.5); }
+    .filter-clear {
+      align-self:flex-end;
+      padding:10px 18px;
+      font-size:10px;
+    }
+
+    /* ── TABELA ── */
+    .table-wrap {
+      overflow-x:auto;
+      border:1px solid var(--border);
+      border-radius:10px;
+      background:rgba(255,255,255,0.02);
+      backdrop-filter:blur(12px);
+    }
+    table { width:100%; border-collapse:collapse; min-width:1100px; }
+    thead { background:rgba(212,175,85,0.08); }
+    th {
+      color:var(--gold);
+      font-size:11px;
+      letter-spacing:0.12em;
+      text-transform:uppercase;
+      font-weight:400;
+      padding:20px 18px;
+      text-align:left;
+      border-bottom:1px solid var(--border);
+      cursor:pointer;
+      user-select:none;
+      white-space:nowrap;
+    }
+    th:hover { color:var(--gold-light); }
+    th .sort-icon { margin-left:6px; opacity:0.5; font-size:10px; }
+    th.sorted .sort-icon { opacity:1; }
+    td {
+      padding:18px;
+      border-bottom:1px solid rgba(255,255,255,0.05);
+      color:rgba(255,255,255,0.82);
+      font-size:12px;
+      line-height:1.5;
+    }
+    tbody tr:hover { background:rgba(255,255,255,0.03); }
+    .status { color:var(--green); }
+    .hc-sim { color:var(--green); font-weight:bold; }
+    .hc-nao { color:rgba(255,255,255,0.3); }
+    .loading { padding:40px; color:var(--muted); text-align:center; }
+    .count-bar {
+      font-size:10px;
+      color:var(--muted);
+      letter-spacing:0.1em;
+      margin-bottom:10px;
+    }
+
+    @media (max-width:900px) {
+      body { padding:20px; }
+      .topbar { flex-direction:column; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <h1>Painel de Controle</h1>
+    <div class="subtitle">Lista de inscritos do seminário</div>
+    <div class="modo-badge">
+      <span class="modo-dot"></span>
+      <span id="modoAtual">Modo inscrições ativo</span>
+    </div>
+  </div>
+
+  <div class="top-actions">
+    <div class="card">
+      <div class="card-title">Total de inscritos</div>
+      <div class="card-number" id="totalInscritos">0</div>
+    </div>
+
+    <button class="btn green" id="liberarHorasBtn">Liberar Horas Complementares</button>
+    <button class="btn red"   id="liberarInscricoesBtn">Liberar Inscrições</button>
+    <button class="btn blue"  id="pdfTodosBtn">PDF — Todos</button>
+    <button class="btn blue"  id="pdfHCBtn">PDF — Somente HC</button>
+    <button class="btn"       id="alterarSenhaBtn">Alterar Senha</button>
+    <button class="btn"       onclick="window.location.href='index.html'">Voltar</button>
+  </div>
+</div>
+
+<!-- FILTROS -->
+<div class="filters-bar">
+  <div class="filter-group">
+    <label>Buscar nome / e-mail</label>
+    <input type="text" id="filtroTexto" placeholder="Digite para filtrar…">
+  </div>
+  <div class="filter-group">
+    <label>Curso</label>
+    <select id="filtroCurso">
+      <option value="">Todos os cursos</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Vínculo</label>
+    <select id="filtroVinculo">
+      <option value="">Todos</option>
+      <option value="aluno">Aluno</option>
+      <option value="professor">Professor</option>
+      <option value="tae">TAE</option>
+      <option value="visitante_externo">Visitante externo</option>
+      <option value="egresso">Egresso</option>
+      <option value="outro">Outro</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Horas Complementares</label>
+    <select id="filtroHC">
+      <option value="">Todos</option>
+      <option value="SIM">SIM</option>
+      <option value="NÃO">NÃO</option>
+    </select>
+  </div>
+  <button class="btn filter-clear" id="limparFiltrosBtn">Limpar filtros</button>
+</div>
+
+<div class="count-bar" id="countBar"></div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th data-col="#">#<span class="sort-icon">↕</span></th>
+        <th data-col="nome">Nome<span class="sort-icon">↕</span></th>
+        <th data-col="matricula">Matrícula<span class="sort-icon">↕</span></th>
+        <th data-col="email">E-mail<span class="sort-icon">↕</span></th>
+        <th data-col="telefone">Telefone<span class="sort-icon">↕</span></th>
+        <th data-col="curso">Curso<span class="sort-icon">↕</span></th>
+        <th data-col="periodo">Período<span class="sort-icon">↕</span></th>
+        <th data-col="vinculo">Vínculo<span class="sort-icon">↕</span></th>
+        <th data-col="status">Status<span class="sort-icon">↕</span></th>
+        <th data-col="hc">HC<span class="sort-icon">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="tabelaInscritos">
+      <tr><td colspan="10" class="loading">Carregando inscrições…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script type="module">
+  import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import {
+    getFirestore, collection, getDocs, query, orderBy,
+    doc, getDoc, setDoc, updateDoc
+  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
+    authDomain: "projetos-de-extensao.firebaseapp.com",
+    projectId: "projetos-de-extensao",
+    storageBucket: "projetos-de-extensao.firebasestorage.app",
+    messagingSenderId: "42869327067",
+    appId: "1:42869327067:web:84d72c5db659990934b8fe",
+    measurementId: "G-5YR6YD1Z24"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db  = getFirestore(app);
+
+  // ── dados globais ──────────────────────────────────────────────────────────
+  let todosInscritos = [];   // array completo do Firestore
+  let dadosFiltrados = [];   // após aplicar filtros
+  let sortCol        = null;
+  let sortAsc        = true;
+
+  // ── inicializar configurações ──────────────────────────────────────────────
+  async function inicializarConfiguracoes() {
+    const ref  = doc(db, 'configuracoes', 'painel');
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      await setDoc(ref, { senha: 'BENAC', horasLiberadas: false });
+      atualizarModoVisual(false);
+    } else {
+      atualizarModoVisual(snap.data().horasLiberadas);
+    }
+  }
+
+  function atualizarModoVisual(hl) {
+    const texto = document.getElementById('modoAtual');
+    const dot   = document.querySelector('.modo-dot');
+    if (hl) {
+      texto.textContent      = 'Modo horas complementares ativo';
+      dot.style.background   = '#8ff0a4';
+    } else {
+      texto.textContent      = 'Modo inscrições ativo';
+      dot.style.background   = '#d4af55';
+    }
+  }
+
+  // ── carregar inscritos ─────────────────────────────────────────────────────
+  async function carregarInscritos() {
+    try {
+      const q        = query(collection(db, 'inscricoes'), orderBy('inscrito_em', 'desc'));
+      const snapshot = await getDocs(q);
+
+      todosInscritos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+
+      document.getElementById('totalInscritos').textContent = todosInscritos.length;
+
+      // popular filtro de cursos
+      const cursos = [...new Set(todosInscritos.map(i => i.curso).filter(Boolean))].sort();
+      const sel    = document.getElementById('filtroCurso');
+      cursos.forEach(c => {
+        const opt   = document.createElement('option');
+        opt.value   = c;
+        opt.textContent = c;
+        sel.appendChild(opt);
+      });
+
+      aplicarFiltros();
+    } catch (err) {
+      console.error(err);
+      document.getElementById('tabelaInscritos').innerHTML =
+        `<tr><td colspan="10" class="loading">Erro ao carregar dados.</td></tr>`;
+    }
+  }
+
+  // ── filtros ────────────────────────────────────────────────────────────────
+  function aplicarFiltros() {
+    const texto   = document.getElementById('filtroTexto').value.toLowerCase();
+    const curso   = document.getElementById('filtroCurso').value;
+    const vinculo = document.getElementById('filtroVinculo').value;
+    const hc      = document.getElementById('filtroHC').value;
+
+    dadosFiltrados = todosInscritos.filter(i => {
+      const matchTexto   = !texto   || (i.nome||'').toLowerCase().includes(texto) || (i.email||'').toLowerCase().includes(texto);
+      const matchCurso   = !curso   || i.curso   === curso;
+      const matchVinculo = !vinculo || i.vinculo === vinculo;
+      // campo no Firestore é horas_complementares
+      const hcVal        = (i.horas_complementares || 'NÃO').toUpperCase();
+      const matchHC      = !hc     || hcVal === hc;
+      return matchTexto && matchCurso && matchVinculo && matchHC;
+    });
+
+    if (sortCol) ordenar(sortCol, false);
+    else renderizar();
+  }
+
+  ['filtroTexto','filtroCurso','filtroVinculo','filtroHC'].forEach(id => {
+    document.getElementById(id).addEventListener('input',  aplicarFiltros);
+    document.getElementById(id).addEventListener('change', aplicarFiltros);
+  });
+
+  document.getElementById('limparFiltrosBtn').addEventListener('click', () => {
+    document.getElementById('filtroTexto').value   = '';
+    document.getElementById('filtroCurso').value   = '';
+    document.getElementById('filtroVinculo').value = '';
+    document.getElementById('filtroHC').value      = '';
+    aplicarFiltros();
+  });
+
+  // ── ordenação ─────────────────────────────────────────────────────────────
+  function ordenar(col, toggleDir = true) {
+    if (toggleDir) {
+      sortAsc = (sortCol === col) ? !sortAsc : true;
+      sortCol = col;
+    }
+
+    dadosFiltrados.sort((a, b) => {
+      let va = '', vb = '';
+      if      (col === 'nome')      { va = a.nome||'';      vb = b.nome||''; }
+      else if (col === 'matricula') { va = a.matricula||''; vb = b.matricula||''; }
+      else if (col === 'email')     { va = a.email||'';     vb = b.email||''; }
+      else if (col === 'curso')     { va = a.curso||'';     vb = b.curso||''; }
+      else if (col === 'periodo')   { va = +(a.periodo)||0; vb = +(b.periodo)||0; return sortAsc ? va-vb : vb-va; }
+      else if (col === 'vinculo')   { va = a.vinculo||'';   vb = b.vinculo||''; }
+      else if (col === 'hc')        { va = a.horas_complementares||'NÃO'; vb = b.horas_complementares||'NÃO'; }
+      return sortAsc
+        ? String(va).localeCompare(String(vb), 'pt-BR')
+        : String(vb).localeCompare(String(va), 'pt-BR');
+    });
+
+    // atualizar ícones
+    document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      if (th.dataset.col === col) {
+        th.classList.add('sorted');
+        th.querySelector('.sort-icon').textContent = sortAsc ? ' ↑' : ' ↓';
+      } else {
+        const ic = th.querySelector('.sort-icon');
+        if (ic) ic.textContent = ' ↕';
+      }
+    });
+
+    renderizar();
+  }
+
+  document.querySelectorAll('th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (col && col !== '#') ordenar(col);
+    });
+  });
+
+  // ── renderizar tabela ──────────────────────────────────────────────────────
+  function renderizar() {
+    const tabela = document.getElementById('tabelaInscritos');
+
+    document.getElementById('countBar').textContent =
+      `Exibindo ${dadosFiltrados.length} de ${todosInscritos.length} inscrito(s)`;
+
+    if (dadosFiltrados.length === 0) {
+      tabela.innerHTML = `<tr><td colspan="10" class="loading">Nenhum registro encontrado.</td></tr>`;
+      return;
+    }
+
+    tabela.innerHTML = dadosFiltrados.map((d, idx) => {
+      const hcVal = (d.horas_complementares || 'NÃO').toUpperCase();
+      const hcTag = hcVal === 'SIM'
+        ? `<span class="hc-sim">SIM</span>`
+        : `<span class="hc-nao">NÃO</span>`;
+      return `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>${d.nome      || '-'}</td>
+          <td>${d.matricula || '-'}</td>
+          <td>${d.email     || '-'}</td>
+          <td>${d.telefone  || '-'}</td>
+          <td>${d.curso     || '-'}</td>
+          <td>${d.periodo   || '-'}</td>
+          <td>${d.vinculo   || '-'}</td>
+          <td><span class="status">${d.status || 'confirmado'}</span></td>
+          <td>${hcTag}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ── gerar PDF ──────────────────────────────────────────────────────────────
+  function gerarPDF(lista, titulo) {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
+
+    // cabeçalho
+    pdf.setFontSize(16);
+    pdf.setTextColor(40, 40, 40);
+    pdf.text('Seminário de Extensão — 3° Período', 40, 40);
+
+    pdf.setFontSize(11);
+    pdf.setTextColor(100, 100, 100);
+    pdf.text(titulo, 40, 58);
+    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 40, 72);
+
+    // tabela
+    pdf.autoTable({
+      startY: 90,
+      head: [['#','Nome','Matrícula','E-mail','Telefone','Curso','Período','Vínculo','HC']],
+      body: lista.map((d, i) => [
+        i + 1,
+        d.nome      || '-',
+        d.matricula || '-',
+        d.email     || '-',
+        d.telefone  || '-',
+        d.curso     || '-',
+        d.periodo   || '-',
+        d.vinculo   || '-',
+        (d.horas_complementares || 'NÃO').toUpperCase()
+      ]),
+      styles: {
+        font:      'helvetica',
+        fontSize:  9,
+        cellPadding: 5,
+      },
+      headStyles: {
+        fillColor:  [30, 30, 30],
+        textColor:  [212, 175, 85],
+        fontStyle:  'bold',
+        fontSize:   9,
+      },
+      alternateRowStyles: {
+        fillColor: [245, 245, 245],
+      },
+      columnStyles: {
+        0: { halign:'center', cellWidth: 24 },
+        6: { halign:'center', cellWidth: 42 },
+        8: { halign:'center', cellWidth: 30 },
+      },
+      margin: { left: 40, right: 40 },
+    });
+
+    // rodapé com total
+    const pageCount = pdf.internal.getNumberOfPages();
+    for (let p = 1; p <= pageCount; p++) {
+      pdf.setPage(p);
+      pdf.setFontSize(8);
+      pdf.setTextColor(150);
+      pdf.text(
+        `Total: ${lista.length} registro(s)   |   Página ${p} de ${pageCount}`,
+        40,
+        pdf.internal.pageSize.getHeight() - 20
+      );
+    }
+
+    const nomeArquivo = titulo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') + '.pdf';
+    pdf.save(nomeArquivo);
+  }
+
+  document.getElementById('pdfTodosBtn').addEventListener('click', () => {
+    if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
+    gerarPDF(todosInscritos, 'Lista Completa de Inscritos');
+  });
+
+  document.getElementById('pdfHCBtn').addEventListener('click', () => {
+    const comHC = todosInscritos.filter(i =>
+      (i.horas_complementares || '').toUpperCase() === 'SIM'
+    );
+    if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
+    gerarPDF(comHC, 'Inscritos com Horas Complementares (HC = SIM)');
+  });
+
+  // ── liberar horas / inscrições ─────────────────────────────────────────────
+  document.getElementById('liberarHorasBtn').addEventListener('click', async () => {
+    try {
+      await updateDoc(doc(db, 'configuracoes', 'painel'), { horasLiberadas: true });
+      atualizarModoVisual(true);
+      alert('Modo de horas complementares ativado.');
+    } catch (err) { console.error(err); alert('Erro ao liberar horas.'); }
+  });
+
+  document.getElementById('liberarInscricoesBtn').addEventListener('click', async () => {
+    try {
+      await updateDoc(doc(db, 'configuracoes', 'painel'), { horasLiberadas: false });
+      atualizarModoVisual(false);
+      alert('Modo inscrições ativado novamente.');
+    } catch (err) { console.error(err); alert('Erro ao liberar inscrições.'); }
+  });
+
+  // ── alterar senha ──────────────────────────────────────────────────────────
+  document.getElementById('alterarSenhaBtn').addEventListener('click', async () => {
+    const novaSenha = prompt('Digite a nova senha:');
+    if (!novaSenha) return;
+    try {
+      await updateDoc(doc(db, 'configuracoes', 'painel'), { senha: novaSenha });
+      alert('Senha alterada com sucesso.');
+    } catch (err) { console.error(err); alert('Erro ao alterar senha.'); }
+  });
+
+  // ── inicializar ────────────────────────────────────────────────────────────
+  await inicializarConfiguracoes();
+  await carregarInscritos();
+</script>
+</body>
+</html>
