@@ -540,7 +540,10 @@
 
   document.getElementById('pdfTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
-    gerarPDF(todosInscritos, 'Lista Completa de Inscritos');
+    const listaOrdenada = [...todosInscritos].sort((a, b) =>
+  (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+);
+gerarPDF(listaOrdenada, 'Lista Completa de Inscritos');
   });
 
   document.getElementById('pdfHCBtn').addEventListener('click', () => {
@@ -548,7 +551,10 @@
       (i.horas_complementares || '').toUpperCase() === 'SIM'
     );
     if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
-    gerarPDF(comHC, 'Inscritos com Horas Complementares (HC = SIM)');
+    const comHCOrdenado = comHC.sort((a, b) =>
+  (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+);
+gerarPDF(comHCOrdenado, 'Inscritos com Horas Complementares (HC = SIM)');
   });
 
   // ── liberar horas / inscrições ─────────────────────────────────────────────
