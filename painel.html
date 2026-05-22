@@ -8,11 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
 
-  <!-- jsPDF para geração de PDF no browser -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-
-  <!-- ✅ ADICIONADO: SheetJS para geração de Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
   <style>
@@ -45,7 +42,6 @@
       pointer-events:none;
     }
 
-    /* ── TOPBAR ── */
     .topbar {
       display:flex;
       justify-content:space-between;
@@ -77,7 +73,6 @@
     }
     .modo-dot { width:9px; height:9px; border-radius:50%; background:var(--green); }
 
-    /* ── ACTIONS ── */
     .top-actions {
       display:flex;
       gap:12px;
@@ -115,12 +110,9 @@
     .btn.red:hover { background:rgba(255,123,123,0.08); border-color:var(--red); }
     .btn.blue { border-color:rgba(100,160,255,0.35); color:#7eb8ff; }
     .btn.blue:hover { background:rgba(100,160,255,0.08); border-color:#7eb8ff; }
-
-    /* ✅ ADICIONADO: cor para botões Excel */
     .btn.excel { border-color:rgba(143,240,164,0.35); color:#7bffc8; }
     .btn.excel:hover { background:rgba(143,240,164,0.08); border-color:#7bffc8; }
 
-    /* ✅ ADICIONADO: separador visual entre grupos de botões */
     .btn-divider {
       width: 1px;
       height: 36px;
@@ -128,7 +120,6 @@
       align-self: center;
     }
 
-    /* ── FILTROS ── */
     .filters-bar {
       display:flex;
       gap:12px;
@@ -159,7 +150,6 @@
       font-size:10px;
     }
 
-    /* ── TABELA ── */
     .table-wrap {
       overflow-x:auto;
       border:1px solid var(--border);
@@ -167,7 +157,7 @@
       background:rgba(255,255,255,0.02);
       backdrop-filter:blur(12px);
     }
-    table { width:100%; border-collapse:collapse; min-width:1100px; }
+    table { width:100%; border-collapse:collapse; min-width:1200px; }
     thead { background:rgba(212,175,85,0.08); }
     th {
       color:var(--gold);
@@ -204,6 +194,23 @@
       margin-bottom:10px;
     }
 
+    /* Presença select na tabela */
+    .presenca-select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      outline: none;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .presenca-select:focus { border-color: rgba(212,175,85,0.5); }
+    .presenca-select.sim { color: var(--green); border-color: rgba(143,240,164,0.4); }
+    .presenca-select.nao { color: var(--red);   border-color: rgba(255,123,123,0.3); }
+
     @media (max-width:900px) {
       body { padding:20px; }
       .topbar { flex-direction:column; }
@@ -233,20 +240,18 @@
 
     <div class="btn-divider"></div>
 
-    <!-- PDF (original, sem alteração) -->
-    <button class="btn blue"  id="pdfTodosBtn">PDF — Todos</button>
-    <button class="btn blue"  id="pdfHCBtn">PDF — Somente HC</button>
+    <button class="btn blue" id="pdfTodosBtn">PDF — Todos</button>
+    <button class="btn blue" id="pdfHCBtn">PDF — Somente HC</button>
 
     <div class="btn-divider"></div>
 
-    <!-- ✅ ADICIONADO: botões Excel -->
     <button class="btn excel" id="xlsTodosBtn">Excel — Todos</button>
     <button class="btn excel" id="xlsHCBtn">Excel — Somente HC</button>
 
     <div class="btn-divider"></div>
 
-    <button class="btn"       id="alterarSenhaBtn">Alterar Senha</button>
-    <button class="btn"       onclick="window.location.href='index.html'">Voltar</button>
+    <button class="btn" id="alterarSenhaBtn">Alterar Senha</button>
+    <button class="btn" onclick="window.location.href='index.html'">Voltar</button>
   </div>
 </div>
 
@@ -301,10 +306,11 @@
         <th data-col="vinculo">Vínculo<span class="sort-icon">↕</span></th>
         <th data-col="status">Status<span class="sort-icon">↕</span></th>
         <th data-col="hc">HC<span class="sort-icon">↕</span></th>
+        <th>Presença</th>
       </tr>
     </thead>
     <tbody id="tabelaInscritos">
-      <tr><td colspan="10" class="loading">Carregando inscrições…</td></tr>
+      <tr><td colspan="11" class="loading">Carregando inscrições…</td></tr>
     </tbody>
   </table>
 </div>
@@ -329,13 +335,15 @@
   const app = initializeApp(firebaseConfig);
   const db  = getFirestore(app);
 
-  // ── dados globais ──────────────────────────────────────────────────────────
   let todosInscritos = [];
   let dadosFiltrados = [];
   let sortCol        = null;
   let sortAsc        = true;
 
-  // ── inicializar configurações ──────────────────────────────────────────────
+  // Mapa local de presença: id do inscrito → 'SIM' | 'NÃO' | ''
+  const presencaMap = {};
+
+  // ── configurações ──────────────────────────────────────────────────────────
   async function inicializarConfiguracoes() {
     const ref  = doc(db, 'configuracoes', 'painel');
     const snap = await getDoc(ref);
@@ -351,11 +359,11 @@
     const texto = document.getElementById('modoAtual');
     const dot   = document.querySelector('.modo-dot');
     if (hl) {
-      texto.textContent      = 'Modo horas complementares ativo';
-      dot.style.background   = '#8ff0a4';
+      texto.textContent    = 'Modo horas complementares ativo';
+      dot.style.background = '#8ff0a4';
     } else {
-      texto.textContent      = 'Modo inscrições ativo';
-      dot.style.background   = '#d4af55';
+      texto.textContent    = 'Modo inscrições ativo';
+      dot.style.background = '#d4af55';
     }
   }
 
@@ -366,15 +374,13 @@
       const snapshot = await getDocs(q);
 
       todosInscritos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-
       document.getElementById('totalInscritos').textContent = todosInscritos.length;
 
       const cursos = [...new Set(todosInscritos.map(i => i.curso).filter(Boolean))].sort();
       const sel    = document.getElementById('filtroCurso');
       cursos.forEach(c => {
-        const opt   = document.createElement('option');
-        opt.value   = c;
-        opt.textContent = c;
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
         sel.appendChild(opt);
       });
 
@@ -382,7 +388,7 @@
     } catch (err) {
       console.error(err);
       document.getElementById('tabelaInscritos').innerHTML =
-        `<tr><td colspan="10" class="loading">Erro ao carregar dados.</td></tr>`;
+        `<tr><td colspan="11" class="loading">Erro ao carregar dados.</td></tr>`;
     }
   }
 
@@ -464,20 +470,21 @@
   // ── renderizar tabela ──────────────────────────────────────────────────────
   function renderizar() {
     const tabela = document.getElementById('tabelaInscritos');
-
     document.getElementById('countBar').textContent =
       `Exibindo ${dadosFiltrados.length} de ${todosInscritos.length} inscrito(s)`;
 
     if (dadosFiltrados.length === 0) {
-      tabela.innerHTML = `<tr><td colspan="10" class="loading">Nenhum registro encontrado.</td></tr>`;
+      tabela.innerHTML = `<tr><td colspan="11" class="loading">Nenhum registro encontrado.</td></tr>`;
       return;
     }
 
     tabela.innerHTML = dadosFiltrados.map((d, idx) => {
-      const hcVal = (d.horas_complementares || 'NÃO').toUpperCase();
-      const hcTag = hcVal === 'SIM'
+      const hcVal  = (d.horas_complementares || 'NÃO').toUpperCase();
+      const hcTag  = hcVal === 'SIM'
         ? `<span class="hc-sim">SIM</span>`
         : `<span class="hc-nao">NÃO</span>`;
+      const pVal   = presencaMap[d.id] || '';
+      const pClass = pVal === 'SIM' ? 'sim' : pVal === 'NÃO' ? 'nao' : '';
       return `
         <tr>
           <td>${idx + 1}</td>
@@ -490,28 +497,49 @@
           <td>${d.vinculo   || '-'}</td>
           <td><span class="status">${d.status || 'confirmado'}</span></td>
           <td>${hcTag}</td>
+          <td>
+            <select class="presenca-select ${pClass}" data-id="${d.id}"
+              onchange="window._onPresenca(this)">
+              <option value=""   ${pVal===''    ? 'selected':''}>—</option>
+              <option value="SIM"${pVal==='SIM' ? 'selected':''}>SIM</option>
+              <option value="NÃO"${pVal==='NÃO' ? 'selected':''}>NÃO</option>
+            </select>
+          </td>
         </tr>`;
     }).join('');
   }
 
-  // ── gerar PDF (original, sem alteração) ───────────────────────────────────
-  function gerarPDF(lista, titulo) {
+  // Handler global para o select de presença (evita re-render ao mudar)
+  window._onPresenca = function(sel) {
+    const id  = sel.dataset.id;
+    const val = sel.value;
+    presencaMap[id] = val;
+    sel.className = 'presenca-select ' + (val === 'SIM' ? 'sim' : val === 'NÃO' ? 'nao' : '');
+  };
+
+  // ── gerar PDF ─────────────────────────────────────────────────────────────
+  // PDF Todos  → SEM HC, COM Presença (coluna em branco para assinatura)
+  // PDF HC     → COM HC, SEM Presença
+  function gerarPDF(lista, titulo, incluirHC, incluirPresenca) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
     pdf.setFontSize(16);
     pdf.setTextColor(40, 40, 40);
-    pdf.text('Seminário de Extensão — 3° Período', 40, 40);
+    pdf.text('Seminario de Extensao - 3 Periodo', 40, 40);
 
     pdf.setFontSize(11);
     pdf.setTextColor(100, 100, 100);
     pdf.text(titulo, 40, 58);
     pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 40, 72);
 
-    pdf.autoTable({
-      startY: 90,
-      head: [['#','Nome','Matrícula','E-mail','Telefone','Curso','Período','Vínculo','HC','Presença']],
-      body: lista.map((d, i) => [
+    // Cabeçalho — sem HC quando for "Todos"; sem Presença quando for "HC"
+    const head = ['#', 'Nome', 'Matricula', 'E-mail', 'Telefone', 'Curso', 'Periodo', 'Vinculo', 'Status'];
+    if (incluirHC)       head.push('HC');
+    if (incluirPresenca) head.push('Presenca');
+
+    const body = lista.map((d, i) => {
+      const row = [
         i + 1,
         d.nome      || '-',
         d.matricula || '-',
@@ -520,30 +548,64 @@
         d.curso     || '-',
         d.periodo   || '-',
         d.vinculo   || '-',
-        (d.horas_complementares || 'NÃO').toUpperCase(),
-        ''   // coluna em branco para marcar presença no dia
-      ]),
+        d.status    || 'confirmado',
+      ];
+      if (incluirHC)       row.push((d.horas_complementares || 'NAO').toUpperCase());
+      if (incluirPresenca) row.push('');
+      return row;
+    });
+
+    // Página landscape A4 = 841.89 pt, margens 40+40 → útil ≈ 762 pt
+    // 9 colunas base + 1 opcional
+    // Sem coluna extra: soma das fixas abaixo = 712 pt (cabe em 762)
+    // Com Presença (50 pt extra): 762 pt exato
+    // Com HC (28 pt extra): 740 pt (cabe)
+    const colStyles = {
+      0: { halign: 'center', cellWidth: 22  },  // #
+      1: {                   cellWidth: 150 },  // Nome
+      2: { halign: 'center', cellWidth: 76  },  // Matrícula
+      3: {                   cellWidth: 150 },  // E-mail
+      4: { halign: 'center', cellWidth: 80  },  // Telefone
+      5: {                   cellWidth: 88  },  // Curso
+      6: { halign: 'center', cellWidth: 42  },  // Periodo
+      7: {                   cellWidth: 68  },  // Vinculo
+      8: {                   cellWidth: 60  },  // Status
+    };
+
+    let nextCol = 9;
+    if (incluirHC) {
+      colStyles[nextCol] = { halign: 'center', cellWidth: 28 };
+      nextCol++;
+    }
+    if (incluirPresenca) {
+      colStyles[nextCol] = {
+        halign: 'center',
+        cellWidth: 46,
+        fillColor: [240, 255, 244]
+      };
+    }
+
+    pdf.autoTable({
+      startY: 90,
+      head:   [head],
+      body,
       styles: {
-        font:      'helvetica',
-        fontSize:  9,
+        font:        'helvetica',
+        fontSize:    8.5,
         cellPadding: 5,
+        overflow:    'hidden',
       },
       headStyles: {
         fillColor:  [30, 30, 30],
         textColor:  [212, 175, 85],
         fontStyle:  'bold',
-        fontSize:   9,
+        fontSize:   8.5,
+        overflow:   'hidden',
       },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245],
-      },
-      columnStyles: {
-        0: { halign:'center', cellWidth: 24 },
-        6: { halign:'center', cellWidth: 42 },
-        8: { halign:'center', cellWidth: 30 },
-        9: { halign:'center', cellWidth: 46, fillColor: [240, 255, 244] }, // Presença — fundo verde suave
-      },
-      margin: { left: 40, right: 40 },
+      alternateRowStyles: { fillColor: [245, 245, 245] },
+      columnStyles: colStyles,
+      margin:      { left: 40, right: 40 },
+      tableWidth:  'wrap',
     });
 
     const pageCount = pdf.internal.getNumberOfPages();
@@ -552,7 +614,7 @@
       pdf.setFontSize(8);
       pdf.setTextColor(150);
       pdf.text(
-        `Total: ${lista.length} registro(s)   |   Página ${p} de ${pageCount}`,
+        `Total: ${lista.length} registro(s)   |   Pagina ${p} de ${pageCount}`,
         40,
         pdf.internal.pageSize.getHeight() - 20
       );
@@ -562,36 +624,33 @@
     pdf.save(nomeArquivo);
   }
 
+  // PDF — Todos: SEM HC, COM Presença
   document.getElementById('pdfTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
-    const listaOrdenada = [...todosInscritos].sort((a, b) =>
+    const lista = [...todosInscritos].sort((a, b) =>
       (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
     );
-    gerarPDF(listaOrdenada, 'Lista Completa de Inscritos');
+    gerarPDF(lista, 'Lista Completa de Inscritos', false, true);
   });
 
+  // PDF — Somente HC: COM HC, SEM Presença
   document.getElementById('pdfHCBtn').addEventListener('click', () => {
-    const comHC = todosInscritos.filter(i =>
-      (i.horas_complementares || '').toUpperCase() === 'SIM'
-    );
+    const comHC = todosInscritos
+      .filter(i => (i.horas_complementares || '').toUpperCase() === 'SIM')
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
     if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
-    const comHCOrdenado = comHC.sort((a, b) =>
-      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
-    );
-    gerarPDF(comHCOrdenado, 'Inscritos com Horas Complementares (HC = SIM)');
+    gerarPDF(comHC, 'Inscritos com Horas Complementares (HC = SIM)', true, false);
   });
 
-  // ── ✅ ADICIONADO: gerar Excel ─────────────────────────────────────────────
+  // ── gerar Excel ────────────────────────────────────────────────────────────
   function gerarExcel(lista, titulo, nomeArquivo) {
     const XLSX = window.XLSX;
 
-    // Cabeçalhos — coluna "Presença" no final para controle no dia do evento
     const cabecalho = [
       '#', 'Nome', 'Matrícula', 'E-mail', 'Telefone',
       'Curso', 'Período', 'Vínculo', 'HC', 'Presença ✓'
     ];
 
-    // Linhas de dados
     const linhas = lista.map((d, i) => [
       i + 1,
       d.nome      || '',
@@ -602,47 +661,37 @@
       d.periodo   || '',
       d.vinculo   || '',
       (d.horas_complementares || 'NÃO').toUpperCase(),
-      ''   // coluna de presença em branco para preenchimento manual
+      ''
     ]);
 
-    // Montar worksheet a partir de array de arrays
     const wsData = [cabecalho, ...linhas];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    // ── Larguras de coluna (em caracteres) ──
     ws['!cols'] = [
-      { wch: 5  },  // #
-      { wch: 36 },  // Nome
-      { wch: 16 },  // Matrícula
-      { wch: 36 },  // E-mail
-      { wch: 18 },  // Telefone
-      { wch: 30 },  // Curso
-      { wch: 9  },  // Período
-      { wch: 20 },  // Vínculo
-      { wch: 8  },  // HC
-      { wch: 14 },  // Presença
+      { wch: 5  },
+      { wch: 36 },
+      { wch: 16 },
+      { wch: 36 },
+      { wch: 18 },
+      { wch: 30 },
+      { wch: 9  },
+      { wch: 20 },
+      { wch: 8  },
+      { wch: 14 },
     ];
 
-    // ── Estilos do cabeçalho ──
-    // Nota: estilos completos exigem xlsx-style (pro); com XLSX free aplicamos
-    // o que é suportado via cell objects.
     const headerStyle = {
-      font:    { bold: true, color: { rgb: 'D4AF55' } },
-      fill:    { fgColor: { rgb: '1E1E1E' } },
+      font:      { bold: true, color: { rgb: 'D4AF55' } },
+      fill:      { fgColor: { rgb: '1E1E1E' } },
       alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: {
-        bottom: { style: 'medium', color: { rgb: 'D4AF55' } }
-      }
+      border:    { bottom: { style: 'medium', color: { rgb: 'D4AF55' } } }
     };
 
     cabecalho.forEach((_, colIdx) => {
       const cellAddr = XLSX.utils.encode_cell({ r: 0, c: colIdx });
-      if (ws[cellAddr]) {
-        ws[cellAddr].s = headerStyle;
-      }
+      if (ws[cellAddr]) ws[cellAddr].s = headerStyle;
     });
 
-    // ── Coluna de Presença: fundo levemente diferente para destaque ──
     const presencaStyle = {
       fill:      { fgColor: { rgb: 'F0FFF4' } },
       alignment: { horizontal: 'center', vertical: 'center' },
@@ -657,28 +706,22 @@
       ws[cellAddr].s = presencaStyle;
     }
 
-    // ── Freeze da primeira linha (cabeçalho sempre visível ao rolar) ──
     ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
 
-    // ── AutoFilter em todas as colunas ──
-    const lastCol  = XLSX.utils.encode_col(cabecalho.length - 1);
-    const lastRow  = linhas.length + 1;
+    const lastCol = XLSX.utils.encode_col(cabecalho.length - 1);
+    const lastRow = linhas.length + 1;
     ws['!autofilter'] = { ref: `A1:${lastCol}${lastRow}` };
 
-    // ── Criar workbook e adicionar planilha ──
     const wb = XLSX.utils.book_new();
-
-    // Propriedades do documento
     wb.Props = {
-      Title:   titulo,
-      Subject: 'Controle de Presença — Seminário de Extensão',
-      Author:  'Painel de Controle',
+      Title:       titulo,
+      Subject:     'Controle de Presença — Seminário de Extensão',
+      Author:      'Painel de Controle',
       CreatedDate: new Date()
     };
 
     XLSX.utils.book_append_sheet(wb, ws, 'Inscritos');
 
-    // ── Aba de instruções ──
     const wsInfo = XLSX.utils.aoa_to_sheet([
       ['Instruções de uso'],
       [''],
@@ -691,11 +734,9 @@
     wsInfo['!cols'] = [{ wch: 80 }];
     XLSX.utils.book_append_sheet(wb, wsInfo, 'Instruções');
 
-    // Salvar arquivo
     XLSX.writeFile(wb, nomeArquivo);
   }
 
-  // Botão Excel — Todos
   document.getElementById('xlsTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
     const lista = [...todosInscritos].sort((a, b) =>
@@ -704,7 +745,6 @@
     gerarExcel(lista, 'Lista Completa de Inscritos', 'Inscritos_Todos.xlsx');
   });
 
-  // Botão Excel — Somente HC
   document.getElementById('xlsHCBtn').addEventListener('click', () => {
     const comHC = todosInscritos
       .filter(i => (i.horas_complementares || '').toUpperCase() === 'SIM')
