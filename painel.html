@@ -329,8 +329,7 @@
   let sortCol        = null;
   let sortAsc        = true;
 
-  // ── Mapa de presença local: id → 'SIM' | 'NÃO' | '' ──────────────────────
-  // Este mapa é a fonte da verdade — alimenta tanto a tabela quanto PDF/Excel
+  // Mapa de presença: id do inscrito → 'SIM' | 'NÃO' | ''
   const presencaMap = {};
 
   // ── configurações ──────────────────────────────────────────────────────────
@@ -499,7 +498,7 @@
     }).join('');
   }
 
-  // Handler global de presença — atualiza apenas o mapa, sem re-render
+  // Handler global de presença
   window._onPresenca = function(sel) {
     const id  = sel.dataset.id;
     const val = sel.value;
@@ -508,8 +507,6 @@
   };
 
   // ── helper: enriquecer lista com presença do mapa ─────────────────────────
-  // Retorna uma cópia da lista com a propriedade `presenca` preenchida a partir
-  // do presencaMap. Isso garante que PDF e Excel sempre reflitam o estado atual.
   function listaComPresenca(lista) {
     return lista.map(d => ({
       ...d,
@@ -518,25 +515,27 @@
   }
 
   // ── gerar PDF ─────────────────────────────────────────────────────────────
-  // Colunas: # | Nome | Matrícula | E-mail | Telefone | Curso | Per. | Vínculo | Status | HC | Presença
-  // Ajuste de larguras: Período reduzido (30pt) para dar mais espaço à Presença (56pt)
+  // A4 landscape = 841.89 × 595.28 pt. Margens 36 pt cada lado → útil = 769.89 pt
+  // Colunas (11 no total) — soma exata = 770 pt:
+  //   #(20) | Nome(148) | Matric(70) | Email(142) | Tel(74) | Curso(88) | Per(26) | Vinculo(62) | Status(56) | HC(26) | Presença(58)
+  //   20+148+70+142+74+88+26+62+56+26+58 = 770
   function gerarPDF(lista, titulo) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
     // Cabeçalho do documento
-    pdf.setFontSize(16);
-    pdf.setTextColor(40, 40, 40);
-    pdf.text('Seminario de Extensao - 3 Periodo', 40, 40);
+    pdf.setFontSize(15);
+    pdf.setTextColor(30, 30, 30);
+    pdf.text('Seminario de Extensao - 3 Periodo', 36, 38);
 
-    pdf.setFontSize(11);
+    pdf.setFontSize(10);
     pdf.setTextColor(100, 100, 100);
-    pdf.text(titulo, 40, 58);
-    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 40, 72);
+    pdf.text(titulo, 36, 54);
+    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 36, 67);
 
-    // Monta corpo com presença do mapa
     const enriched = listaComPresenca(lista);
 
+    // Cabeçalhos — "Per." alinhado à esquerda igual às outras colunas
     const head = [['#', 'Nome', 'Matricula', 'E-mail', 'Telefone', 'Curso', 'Per.', 'Vinculo', 'Status', 'HC', 'Presenca']];
 
     const body = enriched.map((d, i) => [
@@ -550,60 +549,60 @@
       d.vinculo   || '-',
       d.status    || 'confirmado',
       (d.horas_complementares || 'NAO').toUpperCase(),
-      d.presenca  || ''          // ← valor real do presencaMap
+      d.presenca  || ''
     ]);
 
-    // Larguras calibradas para A4 landscape (útil ≈ 762 pt com margens 40+40)
-    // Total abaixo = 762 pt exato
-    const colStyles = {
-      0:  { halign: 'center', cellWidth: 22  },  // #
-      1:  {                   cellWidth: 148 },  // Nome
-      2:  { halign: 'center', cellWidth: 72  },  // Matrícula
-      3:  {                   cellWidth: 144 },  // E-mail
-      4:  { halign: 'center', cellWidth: 76  },  // Telefone
-      5:  {                   cellWidth: 86  },  // Curso
-      6:  { halign: 'center', cellWidth: 30  },  // Período  ← compactado
-      7:  {                   cellWidth: 62  },  // Vínculo
-      8:  {                   cellWidth: 58  },  // Status
-      9:  { halign: 'center', cellWidth: 28  },  // HC
-      10: {                                      // Presença ← mais espaço
-        halign:    'center',
-        cellWidth: 36,
-        fillColor: [240, 255, 244]
-      },
-    };
-
     pdf.autoTable({
-      startY: 90,
+      startY: 80,
       head,
       body,
       styles: {
         font:        'helvetica',
-        fontSize:    8.5,
-        cellPadding: 4,
+        fontSize:    8,
+        cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
         overflow:    'hidden',
+        halign:      'left',   // padrão: tudo alinhado à esquerda
+        valign:      'middle',
       },
       headStyles: {
-        fillColor:  [30, 30, 30],
+        fillColor:  [25, 25, 25],
         textColor:  [212, 175, 85],
         fontStyle:  'bold',
-        fontSize:   8.5,
+        fontSize:   7.5,
+        halign:     'left',    // cabeçalhos também à esquerda — corrige o "Per." deslocado
+        valign:     'middle',
+        cellPadding:{ top: 5, bottom: 5, left: 4, right: 4 },
       },
-      alternateRowStyles: { fillColor: [245, 245, 245] },
-      columnStyles: colStyles,
-      margin:      { left: 40, right: 40 },
-      tableWidth:  'wrap',
-      // Destaca células de presença marcadas
+      alternateRowStyles: { fillColor: [246, 246, 246] },
+      // Larguras calibradas para caber em 770 pt úteis (margens 36+36)
+      columnStyles: {
+        0:  { cellWidth: 20,  halign: 'center' },  // #
+        1:  { cellWidth: 148 },                    // Nome
+        2:  { cellWidth: 70  },                    // Matrícula
+        3:  { cellWidth: 142 },                    // E-mail
+        4:  { cellWidth: 74  },                    // Telefone
+        5:  { cellWidth: 88  },                    // Curso
+        6:  { cellWidth: 26,  halign: 'left'   },  // Per. — esquerda, compacto
+        7:  { cellWidth: 62  },                    // Vínculo
+        8:  { cellWidth: 56  },                    // Status
+        9:  { cellWidth: 26,  halign: 'center' },  // HC
+        10: { cellWidth: 58,  halign: 'center',    // Presença
+              fillColor: [240, 255, 244] },
+      },
+      margin:     { left: 36, right: 36 },
+      tableWidth: 'wrap',
+      // Cor dinâmica na coluna de presença
       didParseCell: function(data) {
         if (data.column.index === 10 && data.section === 'body') {
-          const val = data.cell.raw;
+          const val = String(data.cell.raw || '');
           if (val === 'SIM') {
-            data.cell.styles.textColor  = [26, 122, 53];
+            data.cell.styles.textColor  = [20, 120, 50];
             data.cell.styles.fontStyle  = 'bold';
-            data.cell.styles.fillColor  = [220, 255, 230];
+            data.cell.styles.fillColor  = [215, 255, 225];
           } else if (val === 'NÃO') {
-            data.cell.styles.textColor  = [200, 50, 50];
-            data.cell.styles.fillColor  = [255, 240, 240];
+            data.cell.styles.textColor  = [190, 40, 40];
+            data.cell.styles.fontStyle  = 'bold';
+            data.cell.styles.fillColor  = [255, 235, 235];
           }
         }
       },
@@ -612,33 +611,33 @@
     const pageCount = pdf.internal.getNumberOfPages();
     for (let p = 1; p <= pageCount; p++) {
       pdf.setPage(p);
-      pdf.setFontSize(8);
-      pdf.setTextColor(150);
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(160);
       pdf.text(
         `Total: ${lista.length} registro(s)   |   Pagina ${p} de ${pageCount}`,
-        40,
-        pdf.internal.pageSize.getHeight() - 20
+        36,
+        pdf.internal.pageSize.getHeight() - 18
       );
     }
 
-    const nomeArquivo = titulo.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '') + '.pdf';
-    pdf.save(nomeArquivo);
+    const nomeArq = titulo.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'') + '.pdf';
+    pdf.save(nomeArq);
   }
 
-  // PDF — Todos (ordenado por nome, com presença do mapa)
+  // PDF — Todos
   document.getElementById('pdfTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
     const lista = [...todosInscritos].sort((a, b) =>
-      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+      (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' })
     );
     gerarPDF(lista, 'Lista Completa de Inscritos');
   });
 
-  // PDF — Somente HC (apenas HC=SIM, com presença do mapa)
+  // PDF — Somente HC
   document.getElementById('pdfHCBtn').addEventListener('click', () => {
     const comHC = todosInscritos
-      .filter(i => (i.horas_complementares || '').toUpperCase() === 'SIM')
-      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
+      .filter(i => (i.horas_complementares||'').toUpperCase() === 'SIM')
+      .sort((a, b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' }));
     if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
     gerarPDF(comHC, 'Inscritos_HC_SIM');
   });
@@ -647,7 +646,6 @@
   function gerarExcel(lista, titulo, nomeArquivo) {
     const XLSX = window.XLSX;
 
-    // Enriquece com presença do mapa
     const enriched = listaComPresenca(lista);
 
     const cabecalho = [
@@ -665,13 +663,12 @@
       d.periodo   || '',
       d.vinculo   || '',
       (d.horas_complementares || 'NÃO').toUpperCase(),
-      d.presenca  || ''   // ← valor real do presencaMap
+      d.presenca  || ''
     ]);
 
     const wsData = [cabecalho, ...linhas];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
-    // Larguras das colunas (Período compacto, Presença mais larga)
     ws['!cols'] = [
       { wch: 5  },  // #
       { wch: 36 },  // Nome
@@ -679,16 +676,15 @@
       { wch: 36 },  // E-mail
       { wch: 18 },  // Telefone
       { wch: 30 },  // Curso
-      { wch: 8  },  // Período  ← compacto
+      { wch: 8  },  // Período
       { wch: 20 },  // Vínculo
       { wch: 8  },  // HC
-      { wch: 16 },  // Presença ← mais espaço
+      { wch: 16 },  // Presença
     ];
 
-    // Estilo do cabeçalho
     const headerStyle = {
-      font:      { bold: true, color: { rgb: 'D4AF55' } },
-      fill:      { fgColor: { rgb: '1E1E1E' } },
+      font:      { bold: true, color: { rgb: 'D4AF55' }, name: 'Arial', sz: 10 },
+      fill:      { fgColor: { rgb: '1E1E1E' }, patternType: 'solid' },
       alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
       border:    { bottom: { style: 'medium', color: { rgb: 'D4AF55' } } }
     };
@@ -697,10 +693,8 @@
       if (ws[addr]) ws[addr].s = headerStyle;
     });
 
-    // Estilo das células de dados: alterna branco/cinza-claro
-    // Presença: verde-claro se SIM, vermelho-claro se NÃO, neutro se vazio
     for (let r = 1; r <= linhas.length; r++) {
-      const par = r % 2 === 1;
+      const par    = r % 2 === 1;
       const bgBase = par ? 'FFFFFF' : 'F5F5F5';
 
       for (let c = 0; c < cabecalho.length; c++) {
@@ -708,17 +702,13 @@
         if (!ws[addr]) ws[addr] = { t: 's', v: '' };
 
         if (c === 9) {
-          // Coluna Presença — cor conforme valor
           const val = ws[addr].v;
-          let bgPresenca = 'F0FFF4';
-          let fontColor  = '555555';
-          let bold       = false;
-          if (val === 'SIM') { bgPresenca = 'DCFFE8'; fontColor = '1A7A35'; bold = true; }
-          if (val === 'NÃO') { bgPresenca = 'FFE8E8'; fontColor = 'C83232'; bold = true; }
-
+          let bg = 'F0FFF4', fc = '555555', bold = false;
+          if (val === 'SIM') { bg = 'D7FFE1'; fc = '14783A'; bold = true; }
+          if (val === 'NÃO') { bg = 'FFEBEB'; fc = 'BE2828'; bold = true; }
           ws[addr].s = {
-            font:      { name: 'Arial', sz: 10, bold, color: { rgb: fontColor } },
-            fill:      { fgColor: { rgb: bgPresenca }, patternType: 'solid' },
+            font:      { name: 'Arial', sz: 10, bold, color: { rgb: fc } },
+            fill:      { fgColor: { rgb: bg }, patternType: 'solid' },
             alignment: { horizontal: 'center', vertical: 'center' },
             border: {
               left:  { style: 'medium', color: { rgb: '8FF0A4' } },
@@ -735,16 +725,14 @@
       }
     }
 
-    // Congelar primeira linha e ativar AutoFiltro
     ws['!freeze']     = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
     ws['!autofilter'] = { ref: `A1:J${linhas.length + 1}` };
 
-    // Aba de instruções
     const wsInfo = XLSX.utils.aoa_to_sheet([
       ['Instruções de uso'],
       [''],
       ['• Use os filtros do Excel (seta nos cabeçalhos) para filtrar por curso, vínculo ou HC.'],
-      ['• A coluna "Presença ✓" já reflete o que foi marcado no painel antes da exportação.'],
+      ['• A coluna "Presença ✓" reflete o que foi marcado no painel antes da exportação.'],
       ['• Você pode editar a coluna de presença diretamente na planilha durante o evento.'],
       ['• Gerado em: ' + new Date().toLocaleString('pt-BR')],
       ['• Total de registros: ' + lista.length],
@@ -762,7 +750,7 @@
   document.getElementById('xlsTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
     const lista = [...todosInscritos].sort((a, b) =>
-      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+      (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' })
     );
     gerarExcel(lista, 'Lista Completa de Inscritos', 'Inscritos_Todos.xlsx');
   });
@@ -770,8 +758,8 @@
   // Excel — Somente HC
   document.getElementById('xlsHCBtn').addEventListener('click', () => {
     const comHC = todosInscritos
-      .filter(i => (i.horas_complementares || '').toUpperCase() === 'SIM')
-      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
+      .filter(i => (i.horas_complementares||'').toUpperCase() === 'SIM')
+      .sort((a, b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' }));
     if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
     gerarExcel(comHC, 'Inscritos com HC', 'Inscritos_HC.xlsx');
   });
