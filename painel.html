@@ -510,7 +510,7 @@
 
     pdf.autoTable({
       startY: 90,
-      head: [['#','Nome','Matrícula','E-mail','Telefone','Curso','Período','Vínculo','HC']],
+      head: [['#','Nome','Matrícula','E-mail','Telefone','Curso','Período','Vínculo','HC','Presença']],
       body: lista.map((d, i) => [
         i + 1,
         d.nome      || '-',
@@ -520,7 +520,8 @@
         d.curso     || '-',
         d.periodo   || '-',
         d.vinculo   || '-',
-        (d.horas_complementares || 'NÃO').toUpperCase()
+        (d.horas_complementares || 'NÃO').toUpperCase(),
+        ''   // coluna em branco para marcar presença no dia
       ]),
       styles: {
         font:      'helvetica',
@@ -540,6 +541,7 @@
         0: { halign:'center', cellWidth: 24 },
         6: { halign:'center', cellWidth: 42 },
         8: { halign:'center', cellWidth: 30 },
+        9: { halign:'center', cellWidth: 46, fillColor: [240, 255, 244] }, // Presença — fundo verde suave
       },
       margin: { left: 40, right: 40 },
     });
