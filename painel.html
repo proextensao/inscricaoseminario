@@ -12,6 +12,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
+  <!-- ✅ ADICIONADO: SheetJS para geração de Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <style>
     :root {
       --bg:       #050505;
@@ -112,6 +115,18 @@
     .btn.red:hover { background:rgba(255,123,123,0.08); border-color:var(--red); }
     .btn.blue { border-color:rgba(100,160,255,0.35); color:#7eb8ff; }
     .btn.blue:hover { background:rgba(100,160,255,0.08); border-color:#7eb8ff; }
+
+    /* ✅ ADICIONADO: cor para botões Excel */
+    .btn.excel { border-color:rgba(143,240,164,0.35); color:#7bffc8; }
+    .btn.excel:hover { background:rgba(143,240,164,0.08); border-color:#7bffc8; }
+
+    /* ✅ ADICIONADO: separador visual entre grupos de botões */
+    .btn-divider {
+      width: 1px;
+      height: 36px;
+      background: var(--border);
+      align-self: center;
+    }
 
     /* ── FILTROS ── */
     .filters-bar {
@@ -215,8 +230,21 @@
 
     <button class="btn green" id="liberarHorasBtn">Liberar Horas Complementares</button>
     <button class="btn red"   id="liberarInscricoesBtn">Liberar Inscrições</button>
+
+    <div class="btn-divider"></div>
+
+    <!-- PDF (original, sem alteração) -->
     <button class="btn blue"  id="pdfTodosBtn">PDF — Todos</button>
     <button class="btn blue"  id="pdfHCBtn">PDF — Somente HC</button>
+
+    <div class="btn-divider"></div>
+
+    <!-- ✅ ADICIONADO: botões Excel -->
+    <button class="btn excel" id="xlsTodosBtn">Excel — Todos</button>
+    <button class="btn excel" id="xlsHCBtn">Excel — Somente HC</button>
+
+    <div class="btn-divider"></div>
+
     <button class="btn"       id="alterarSenhaBtn">Alterar Senha</button>
     <button class="btn"       onclick="window.location.href='index.html'">Voltar</button>
   </div>
@@ -302,8 +330,8 @@
   const db  = getFirestore(app);
 
   // ── dados globais ──────────────────────────────────────────────────────────
-  let todosInscritos = [];   // array completo do Firestore
-  let dadosFiltrados = [];   // após aplicar filtros
+  let todosInscritos = [];
+  let dadosFiltrados = [];
   let sortCol        = null;
   let sortAsc        = true;
 
@@ -341,7 +369,6 @@
 
       document.getElementById('totalInscritos').textContent = todosInscritos.length;
 
-      // popular filtro de cursos
       const cursos = [...new Set(todosInscritos.map(i => i.curso).filter(Boolean))].sort();
       const sel    = document.getElementById('filtroCurso');
       cursos.forEach(c => {
@@ -370,7 +397,6 @@
       const matchTexto   = !texto   || (i.nome||'').toLowerCase().includes(texto) || (i.email||'').toLowerCase().includes(texto);
       const matchCurso   = !curso   || i.curso   === curso;
       const matchVinculo = !vinculo || i.vinculo === vinculo;
-      // campo no Firestore é horas_complementares
       const hcVal        = (i.horas_complementares || 'NÃO').toUpperCase();
       const matchHC      = !hc     || hcVal === hc;
       return matchTexto && matchCurso && matchVinculo && matchHC;
@@ -414,7 +440,6 @@
         : String(vb).localeCompare(String(va), 'pt-BR');
     });
 
-    // atualizar ícones
     document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
     document.querySelectorAll('th[data-col]').forEach(th => {
       if (th.dataset.col === col) {
@@ -469,12 +494,11 @@
     }).join('');
   }
 
-  // ── gerar PDF ──────────────────────────────────────────────────────────────
+  // ── gerar PDF (original, sem alteração) ───────────────────────────────────
   function gerarPDF(lista, titulo) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
-    // cabeçalho
     pdf.setFontSize(16);
     pdf.setTextColor(40, 40, 40);
     pdf.text('Seminário de Extensão — 3° Período', 40, 40);
@@ -484,7 +508,6 @@
     pdf.text(titulo, 40, 58);
     pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 40, 72);
 
-    // tabela
     pdf.autoTable({
       startY: 90,
       head: [['#','Nome','Matrícula','E-mail','Telefone','Curso','Período','Vínculo','HC']],
@@ -521,7 +544,6 @@
       margin: { left: 40, right: 40 },
     });
 
-    // rodapé com total
     const pageCount = pdf.internal.getNumberOfPages();
     for (let p = 1; p <= pageCount; p++) {
       pdf.setPage(p);
@@ -541,9 +563,9 @@
   document.getElementById('pdfTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
     const listaOrdenada = [...todosInscritos].sort((a, b) =>
-  (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
-);
-gerarPDF(listaOrdenada, 'Lista Completa de Inscritos');
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+    );
+    gerarPDF(listaOrdenada, 'Lista Completa de Inscritos');
   });
 
   document.getElementById('pdfHCBtn').addEventListener('click', () => {
@@ -552,9 +574,141 @@ gerarPDF(listaOrdenada, 'Lista Completa de Inscritos');
     );
     if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
     const comHCOrdenado = comHC.sort((a, b) =>
-  (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
-);
-gerarPDF(comHCOrdenado, 'Inscritos com Horas Complementares (HC = SIM)');
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+    );
+    gerarPDF(comHCOrdenado, 'Inscritos com Horas Complementares (HC = SIM)');
+  });
+
+  // ── ✅ ADICIONADO: gerar Excel ─────────────────────────────────────────────
+  function gerarExcel(lista, titulo, nomeArquivo) {
+    const XLSX = window.XLSX;
+
+    // Cabeçalhos — coluna "Presença" no final para controle no dia do evento
+    const cabecalho = [
+      '#', 'Nome', 'Matrícula', 'E-mail', 'Telefone',
+      'Curso', 'Período', 'Vínculo', 'HC', 'Presença ✓'
+    ];
+
+    // Linhas de dados
+    const linhas = lista.map((d, i) => [
+      i + 1,
+      d.nome      || '',
+      d.matricula || '',
+      d.email     || '',
+      d.telefone  || '',
+      d.curso     || '',
+      d.periodo   || '',
+      d.vinculo   || '',
+      (d.horas_complementares || 'NÃO').toUpperCase(),
+      ''   // coluna de presença em branco para preenchimento manual
+    ]);
+
+    // Montar worksheet a partir de array de arrays
+    const wsData = [cabecalho, ...linhas];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // ── Larguras de coluna (em caracteres) ──
+    ws['!cols'] = [
+      { wch: 5  },  // #
+      { wch: 36 },  // Nome
+      { wch: 16 },  // Matrícula
+      { wch: 36 },  // E-mail
+      { wch: 18 },  // Telefone
+      { wch: 30 },  // Curso
+      { wch: 9  },  // Período
+      { wch: 20 },  // Vínculo
+      { wch: 8  },  // HC
+      { wch: 14 },  // Presença
+    ];
+
+    // ── Estilos do cabeçalho ──
+    // Nota: estilos completos exigem xlsx-style (pro); com XLSX free aplicamos
+    // o que é suportado via cell objects.
+    const headerStyle = {
+      font:    { bold: true, color: { rgb: 'D4AF55' } },
+      fill:    { fgColor: { rgb: '1E1E1E' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border: {
+        bottom: { style: 'medium', color: { rgb: 'D4AF55' } }
+      }
+    };
+
+    cabecalho.forEach((_, colIdx) => {
+      const cellAddr = XLSX.utils.encode_cell({ r: 0, c: colIdx });
+      if (ws[cellAddr]) {
+        ws[cellAddr].s = headerStyle;
+      }
+    });
+
+    // ── Coluna de Presença: fundo levemente diferente para destaque ──
+    const presencaStyle = {
+      fill:      { fgColor: { rgb: 'F0FFF4' } },
+      alignment: { horizontal: 'center', vertical: 'center' },
+      border: {
+        left:  { style: 'medium', color: { rgb: '8FF0A4' } },
+        right: { style: 'thin',   color: { rgb: '8FF0A4' } },
+      }
+    };
+    for (let r = 1; r <= linhas.length; r++) {
+      const cellAddr = XLSX.utils.encode_cell({ r, c: 9 });
+      if (!ws[cellAddr]) ws[cellAddr] = { t: 's', v: '' };
+      ws[cellAddr].s = presencaStyle;
+    }
+
+    // ── Freeze da primeira linha (cabeçalho sempre visível ao rolar) ──
+    ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+
+    // ── AutoFilter em todas as colunas ──
+    const lastCol  = XLSX.utils.encode_col(cabecalho.length - 1);
+    const lastRow  = linhas.length + 1;
+    ws['!autofilter'] = { ref: `A1:${lastCol}${lastRow}` };
+
+    // ── Criar workbook e adicionar planilha ──
+    const wb = XLSX.utils.book_new();
+
+    // Propriedades do documento
+    wb.Props = {
+      Title:   titulo,
+      Subject: 'Controle de Presença — Seminário de Extensão',
+      Author:  'Painel de Controle',
+      CreatedDate: new Date()
+    };
+
+    XLSX.utils.book_append_sheet(wb, ws, 'Inscritos');
+
+    // ── Aba de instruções ──
+    const wsInfo = XLSX.utils.aoa_to_sheet([
+      ['Instruções de uso'],
+      [''],
+      ['• Use os filtros do Excel (seta nos cabeçalhos) para filtrar por curso, vínculo ou HC.'],
+      ['• Na coluna "Presença ✓" marque com ✓, X, ou qualquer símbolo para registrar a presença.'],
+      ['• A planilha está protegida apenas na leitura dos dados; a coluna de presença é editável.'],
+      ['• Gerado em: ' + new Date().toLocaleString('pt-BR')],
+      ['• Total de registros: ' + lista.length],
+    ]);
+    wsInfo['!cols'] = [{ wch: 80 }];
+    XLSX.utils.book_append_sheet(wb, wsInfo, 'Instruções');
+
+    // Salvar arquivo
+    XLSX.writeFile(wb, nomeArquivo);
+  }
+
+  // Botão Excel — Todos
+  document.getElementById('xlsTodosBtn').addEventListener('click', () => {
+    if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
+    const lista = [...todosInscritos].sort((a, b) =>
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+    );
+    gerarExcel(lista, 'Lista Completa de Inscritos', 'Inscritos_Todos.xlsx');
+  });
+
+  // Botão Excel — Somente HC
+  document.getElementById('xlsHCBtn').addEventListener('click', () => {
+    const comHC = todosInscritos
+      .filter(i => (i.horas_complementares || '').toUpperCase() === 'SIM')
+      .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
+    if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
+    gerarExcel(comHC, 'Inscritos com HC', 'Inscritos_HC.xlsx');
   });
 
   // ── liberar horas / inscrições ─────────────────────────────────────────────
