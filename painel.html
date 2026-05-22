@@ -14,16 +14,16 @@
 
   <style>
     :root {
-      --bg:       #050505;
-      --surface:  #101010;
-      --surface2: #161616;
-      --gold:     #d4af55;
+      --bg:        #050505;
+      --surface:   #101010;
+      --surface2:  #161616;
+      --gold:      #d4af55;
       --gold-light:#e7c46d;
-      --border:   rgba(212,175,85,0.18);
-      --text:     #f3efe7;
-      --muted:    rgba(255,255,255,0.45);
-      --green:    #8ff0a4;
-      --red:      #ff7b7b;
+      --border:    rgba(212,175,85,0.18);
+      --text:      #f3efe7;
+      --muted:     rgba(255,255,255,0.45);
+      --green:     #8ff0a4;
+      --red:       #ff7b7b;
     }
     * { margin:0; padding:0; box-sizing:border-box; }
     body {
@@ -86,7 +86,7 @@
       border-radius:8px;
       min-width:200px;
     }
-    .card-title { color:var(--muted); font-size:10px; margin-bottom:8px; letter-spacing:0.14em; text-transform:uppercase; }
+    .card-title  { color:var(--muted); font-size:10px; margin-bottom:8px; letter-spacing:0.14em; text-transform:uppercase; }
     .card-number { color:var(--gold); font-size:1.8rem; }
 
     .btn {
@@ -103,21 +103,20 @@
       font-size:10px;
       white-space:nowrap;
     }
-    .btn:hover { background:rgba(212,175,85,0.08); border-color:var(--gold); }
-    .btn.green { border-color:rgba(143,240,164,0.35); color:var(--green); }
+    .btn:hover  { background:rgba(212,175,85,0.08); border-color:var(--gold); }
+    .btn.green  { border-color:rgba(143,240,164,0.35); color:var(--green); }
     .btn.green:hover { background:rgba(143,240,164,0.08); border-color:var(--green); }
-    .btn.red { border-color:rgba(255,123,123,0.35); color:var(--red); }
-    .btn.red:hover { background:rgba(255,123,123,0.08); border-color:var(--red); }
-    .btn.blue { border-color:rgba(100,160,255,0.35); color:#7eb8ff; }
-    .btn.blue:hover { background:rgba(100,160,255,0.08); border-color:#7eb8ff; }
-    .btn.excel { border-color:rgba(143,240,164,0.35); color:#7bffc8; }
+    .btn.red    { border-color:rgba(255,123,123,0.35); color:var(--red); }
+    .btn.red:hover   { background:rgba(255,123,123,0.08); border-color:var(--red); }
+    .btn.blue   { border-color:rgba(100,160,255,0.35); color:#7eb8ff; }
+    .btn.blue:hover  { background:rgba(100,160,255,0.08); border-color:#7eb8ff; }
+    .btn.excel  { border-color:rgba(143,240,164,0.35); color:#7bffc8; }
     .btn.excel:hover { background:rgba(143,240,164,0.08); border-color:#7bffc8; }
 
     .btn-divider {
-      width: 1px;
-      height: 36px;
-      background: var(--border);
-      align-self: center;
+      width:1px; height:36px;
+      background:var(--border);
+      align-self:center;
     }
 
     .filters-bar {
@@ -144,11 +143,7 @@
     }
     .filter-group input:focus,
     .filter-group select:focus { border-color:rgba(212,175,85,0.5); }
-    .filter-clear {
-      align-self:flex-end;
-      padding:10px 18px;
-      font-size:10px;
-    }
+    .filter-clear { align-self:flex-end; padding:10px 18px; font-size:10px; }
 
     .table-wrap {
       overflow-x:auto;
@@ -183,33 +178,27 @@
       line-height:1.5;
     }
     tbody tr:hover { background:rgba(255,255,255,0.03); }
-    .status { color:var(--green); }
-    .hc-sim { color:var(--green); font-weight:bold; }
-    .hc-nao { color:rgba(255,255,255,0.3); }
+    .status  { color:var(--green); }
+    .hc-sim  { color:var(--green); font-weight:bold; }
+    .hc-nao  { color:rgba(255,255,255,0.3); }
     .loading { padding:40px; color:var(--muted); text-align:center; }
-    .count-bar {
-      font-size:10px;
-      color:var(--muted);
-      letter-spacing:0.1em;
-      margin-bottom:10px;
-    }
+    .count-bar { font-size:10px; color:var(--muted); letter-spacing:0.1em; margin-bottom:10px; }
 
-    /* Presença select na tabela */
     .presenca-select {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-      padding: 6px 10px;
-      border-radius: 4px;
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
-      outline: none;
-      cursor: pointer;
-      transition: 0.2s;
+      background:var(--surface);
+      border:1px solid var(--border);
+      color:var(--text);
+      padding:6px 10px;
+      border-radius:4px;
+      font-family:'DM Mono',monospace;
+      font-size:11px;
+      outline:none;
+      cursor:pointer;
+      transition:0.2s;
     }
-    .presenca-select:focus { border-color: rgba(212,175,85,0.5); }
-    .presenca-select.sim { color: var(--green); border-color: rgba(143,240,164,0.4); }
-    .presenca-select.nao { color: var(--red);   border-color: rgba(255,123,123,0.3); }
+    .presenca-select:focus { border-color:rgba(212,175,85,0.5); }
+    .presenca-select.sim { color:var(--green); border-color:rgba(143,240,164,0.4); }
+    .presenca-select.nao { color:var(--red);   border-color:rgba(255,123,123,0.3); }
 
     @media (max-width:900px) {
       body { padding:20px; }
@@ -240,8 +229,8 @@
 
     <div class="btn-divider"></div>
 
-    <button class="btn blue" id="pdfTodosBtn">PDF — Todos</button>
-    <button class="btn blue" id="pdfHCBtn">PDF — Somente HC</button>
+    <button class="btn blue"  id="pdfTodosBtn">PDF — Todos</button>
+    <button class="btn blue"  id="pdfHCBtn">PDF — Somente HC</button>
 
     <div class="btn-divider"></div>
 
@@ -340,7 +329,8 @@
   let sortCol        = null;
   let sortAsc        = true;
 
-  // Mapa local de presença: id do inscrito → 'SIM' | 'NÃO' | ''
+  // ── Mapa de presença local: id → 'SIM' | 'NÃO' | '' ──────────────────────
+  // Este mapa é a fonte da verdade — alimenta tanto a tabela quanto PDF/Excel
   const presencaMap = {};
 
   // ── configurações ──────────────────────────────────────────────────────────
@@ -500,16 +490,16 @@
           <td>
             <select class="presenca-select ${pClass}" data-id="${d.id}"
               onchange="window._onPresenca(this)">
-              <option value=""   ${pVal===''    ? 'selected':''}>—</option>
-              <option value="SIM"${pVal==='SIM' ? 'selected':''}>SIM</option>
-              <option value="NÃO"${pVal==='NÃO' ? 'selected':''}>NÃO</option>
+              <option value=""    ${pVal===''    ? 'selected':''}>—</option>
+              <option value="SIM" ${pVal==='SIM' ? 'selected':''}>SIM</option>
+              <option value="NÃO" ${pVal==='NÃO' ? 'selected':''}>NÃO</option>
             </select>
           </td>
         </tr>`;
     }).join('');
   }
 
-  // Handler global para o select de presença (evita re-render ao mudar)
+  // Handler global de presença — atualiza apenas o mapa, sem re-render
   window._onPresenca = function(sel) {
     const id  = sel.dataset.id;
     const val = sel.value;
@@ -517,13 +507,24 @@
     sel.className = 'presenca-select ' + (val === 'SIM' ? 'sim' : val === 'NÃO' ? 'nao' : '');
   };
 
+  // ── helper: enriquecer lista com presença do mapa ─────────────────────────
+  // Retorna uma cópia da lista com a propriedade `presenca` preenchida a partir
+  // do presencaMap. Isso garante que PDF e Excel sempre reflitam o estado atual.
+  function listaComPresenca(lista) {
+    return lista.map(d => ({
+      ...d,
+      presenca: presencaMap[d.id] || ''
+    }));
+  }
+
   // ── gerar PDF ─────────────────────────────────────────────────────────────
-  // PDF Todos  → SEM HC, COM Presença (coluna em branco para assinatura)
-  // PDF HC     → COM HC, SEM Presença
-  function gerarPDF(lista, titulo, incluirHC, incluirPresenca) {
+  // Colunas: # | Nome | Matrícula | E-mail | Telefone | Curso | Per. | Vínculo | Status | HC | Presença
+  // Ajuste de larguras: Período reduzido (30pt) para dar mais espaço à Presença (56pt)
+  function gerarPDF(lista, titulo) {
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
 
+    // Cabeçalho do documento
     pdf.setFontSize(16);
     pdf.setTextColor(40, 40, 40);
     pdf.text('Seminario de Extensao - 3 Periodo', 40, 40);
@@ -533,66 +534,53 @@
     pdf.text(titulo, 40, 58);
     pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 40, 72);
 
-    // Cabeçalho — sem HC quando for "Todos"; sem Presença quando for "HC"
-    const head = ['#', 'Nome', 'Matricula', 'E-mail', 'Telefone', 'Curso', 'Periodo', 'Vinculo', 'Status'];
-    if (incluirHC)       head.push('HC');
-    if (incluirPresenca) head.push('Presenca');
+    // Monta corpo com presença do mapa
+    const enriched = listaComPresenca(lista);
 
-    const body = lista.map((d, i) => {
-      const row = [
-        i + 1,
-        d.nome      || '-',
-        d.matricula || '-',
-        d.email     || '-',
-        d.telefone  || '-',
-        d.curso     || '-',
-        d.periodo   || '-',
-        d.vinculo   || '-',
-        d.status    || 'confirmado',
-      ];
-      if (incluirHC)       row.push((d.horas_complementares || 'NAO').toUpperCase());
-      if (incluirPresenca) row.push('');
-      return row;
-    });
+    const head = [['#', 'Nome', 'Matricula', 'E-mail', 'Telefone', 'Curso', 'Per.', 'Vinculo', 'Status', 'HC', 'Presenca']];
 
-    // Página landscape A4 = 841.89 pt, margens 40+40 → útil ≈ 762 pt
-    // 9 colunas base + 1 opcional
-    // Sem coluna extra: soma das fixas abaixo = 712 pt (cabe em 762)
-    // Com Presença (50 pt extra): 762 pt exato
-    // Com HC (28 pt extra): 740 pt (cabe)
+    const body = enriched.map((d, i) => [
+      i + 1,
+      d.nome      || '-',
+      d.matricula || '-',
+      d.email     || '-',
+      d.telefone  || '-',
+      d.curso     || '-',
+      d.periodo   || '-',
+      d.vinculo   || '-',
+      d.status    || 'confirmado',
+      (d.horas_complementares || 'NAO').toUpperCase(),
+      d.presenca  || ''          // ← valor real do presencaMap
+    ]);
+
+    // Larguras calibradas para A4 landscape (útil ≈ 762 pt com margens 40+40)
+    // Total abaixo = 762 pt exato
     const colStyles = {
-      0: { halign: 'center', cellWidth: 22  },  // #
-      1: {                   cellWidth: 150 },  // Nome
-      2: { halign: 'center', cellWidth: 76  },  // Matrícula
-      3: {                   cellWidth: 150 },  // E-mail
-      4: { halign: 'center', cellWidth: 80  },  // Telefone
-      5: {                   cellWidth: 88  },  // Curso
-      6: { halign: 'center', cellWidth: 42  },  // Periodo
-      7: {                   cellWidth: 68  },  // Vinculo
-      8: {                   cellWidth: 60  },  // Status
-    };
-
-    let nextCol = 9;
-    if (incluirHC) {
-      colStyles[nextCol] = { halign: 'center', cellWidth: 28 };
-      nextCol++;
-    }
-    if (incluirPresenca) {
-      colStyles[nextCol] = {
-        halign: 'center',
-        cellWidth: 46,
+      0:  { halign: 'center', cellWidth: 22  },  // #
+      1:  {                   cellWidth: 148 },  // Nome
+      2:  { halign: 'center', cellWidth: 72  },  // Matrícula
+      3:  {                   cellWidth: 144 },  // E-mail
+      4:  { halign: 'center', cellWidth: 76  },  // Telefone
+      5:  {                   cellWidth: 86  },  // Curso
+      6:  { halign: 'center', cellWidth: 30  },  // Período  ← compactado
+      7:  {                   cellWidth: 62  },  // Vínculo
+      8:  {                   cellWidth: 58  },  // Status
+      9:  { halign: 'center', cellWidth: 28  },  // HC
+      10: {                                      // Presença ← mais espaço
+        halign:    'center',
+        cellWidth: 36,
         fillColor: [240, 255, 244]
-      };
-    }
+      },
+    };
 
     pdf.autoTable({
       startY: 90,
-      head:   [head],
+      head,
       body,
       styles: {
         font:        'helvetica',
         fontSize:    8.5,
-        cellPadding: 5,
+        cellPadding: 4,
         overflow:    'hidden',
       },
       headStyles: {
@@ -600,12 +588,25 @@
         textColor:  [212, 175, 85],
         fontStyle:  'bold',
         fontSize:   8.5,
-        overflow:   'hidden',
       },
       alternateRowStyles: { fillColor: [245, 245, 245] },
       columnStyles: colStyles,
       margin:      { left: 40, right: 40 },
       tableWidth:  'wrap',
+      // Destaca células de presença marcadas
+      didParseCell: function(data) {
+        if (data.column.index === 10 && data.section === 'body') {
+          const val = data.cell.raw;
+          if (val === 'SIM') {
+            data.cell.styles.textColor  = [26, 122, 53];
+            data.cell.styles.fontStyle  = 'bold';
+            data.cell.styles.fillColor  = [220, 255, 230];
+          } else if (val === 'NÃO') {
+            data.cell.styles.textColor  = [200, 50, 50];
+            data.cell.styles.fillColor  = [255, 240, 240];
+          }
+        }
+      },
     });
 
     const pageCount = pdf.internal.getNumberOfPages();
@@ -624,34 +625,37 @@
     pdf.save(nomeArquivo);
   }
 
-  // PDF — Todos: SEM HC, COM Presença
+  // PDF — Todos (ordenado por nome, com presença do mapa)
   document.getElementById('pdfTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
     const lista = [...todosInscritos].sort((a, b) =>
       (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
     );
-    gerarPDF(lista, 'Lista Completa de Inscritos', false, true);
+    gerarPDF(lista, 'Lista Completa de Inscritos');
   });
 
-  // PDF — Somente HC: COM HC, SEM Presença
+  // PDF — Somente HC (apenas HC=SIM, com presença do mapa)
   document.getElementById('pdfHCBtn').addEventListener('click', () => {
     const comHC = todosInscritos
       .filter(i => (i.horas_complementares || '').toUpperCase() === 'SIM')
       .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
     if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
-    gerarPDF(comHC, 'Inscritos com Horas Complementares (HC = SIM)', true, false);
+    gerarPDF(comHC, 'Inscritos_HC_SIM');
   });
 
   // ── gerar Excel ────────────────────────────────────────────────────────────
   function gerarExcel(lista, titulo, nomeArquivo) {
     const XLSX = window.XLSX;
 
+    // Enriquece com presença do mapa
+    const enriched = listaComPresenca(lista);
+
     const cabecalho = [
       '#', 'Nome', 'Matrícula', 'E-mail', 'Telefone',
       'Curso', 'Período', 'Vínculo', 'HC', 'Presença ✓'
     ];
 
-    const linhas = lista.map((d, i) => [
+    const linhas = enriched.map((d, i) => [
       i + 1,
       d.nome      || '',
       d.matricula || '',
@@ -661,82 +665,100 @@
       d.periodo   || '',
       d.vinculo   || '',
       (d.horas_complementares || 'NÃO').toUpperCase(),
-      ''
+      d.presenca  || ''   // ← valor real do presencaMap
     ]);
 
     const wsData = [cabecalho, ...linhas];
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
+    // Larguras das colunas (Período compacto, Presença mais larga)
     ws['!cols'] = [
-      { wch: 5  },
-      { wch: 36 },
-      { wch: 16 },
-      { wch: 36 },
-      { wch: 18 },
-      { wch: 30 },
-      { wch: 9  },
-      { wch: 20 },
-      { wch: 8  },
-      { wch: 14 },
+      { wch: 5  },  // #
+      { wch: 36 },  // Nome
+      { wch: 16 },  // Matrícula
+      { wch: 36 },  // E-mail
+      { wch: 18 },  // Telefone
+      { wch: 30 },  // Curso
+      { wch: 8  },  // Período  ← compacto
+      { wch: 20 },  // Vínculo
+      { wch: 8  },  // HC
+      { wch: 16 },  // Presença ← mais espaço
     ];
 
+    // Estilo do cabeçalho
     const headerStyle = {
       font:      { bold: true, color: { rgb: 'D4AF55' } },
       fill:      { fgColor: { rgb: '1E1E1E' } },
       alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
       border:    { bottom: { style: 'medium', color: { rgb: 'D4AF55' } } }
     };
-
     cabecalho.forEach((_, colIdx) => {
-      const cellAddr = XLSX.utils.encode_cell({ r: 0, c: colIdx });
-      if (ws[cellAddr]) ws[cellAddr].s = headerStyle;
+      const addr = XLSX.utils.encode_cell({ r: 0, c: colIdx });
+      if (ws[addr]) ws[addr].s = headerStyle;
     });
 
-    const presencaStyle = {
-      fill:      { fgColor: { rgb: 'F0FFF4' } },
-      alignment: { horizontal: 'center', vertical: 'center' },
-      border: {
-        left:  { style: 'medium', color: { rgb: '8FF0A4' } },
-        right: { style: 'thin',   color: { rgb: '8FF0A4' } },
-      }
-    };
+    // Estilo das células de dados: alterna branco/cinza-claro
+    // Presença: verde-claro se SIM, vermelho-claro se NÃO, neutro se vazio
     for (let r = 1; r <= linhas.length; r++) {
-      const cellAddr = XLSX.utils.encode_cell({ r, c: 9 });
-      if (!ws[cellAddr]) ws[cellAddr] = { t: 's', v: '' };
-      ws[cellAddr].s = presencaStyle;
+      const par = r % 2 === 1;
+      const bgBase = par ? 'FFFFFF' : 'F5F5F5';
+
+      for (let c = 0; c < cabecalho.length; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
+
+        if (c === 9) {
+          // Coluna Presença — cor conforme valor
+          const val = ws[addr].v;
+          let bgPresenca = 'F0FFF4';
+          let fontColor  = '555555';
+          let bold       = false;
+          if (val === 'SIM') { bgPresenca = 'DCFFE8'; fontColor = '1A7A35'; bold = true; }
+          if (val === 'NÃO') { bgPresenca = 'FFE8E8'; fontColor = 'C83232'; bold = true; }
+
+          ws[addr].s = {
+            font:      { name: 'Arial', sz: 10, bold, color: { rgb: fontColor } },
+            fill:      { fgColor: { rgb: bgPresenca }, patternType: 'solid' },
+            alignment: { horizontal: 'center', vertical: 'center' },
+            border: {
+              left:  { style: 'medium', color: { rgb: '8FF0A4' } },
+              right: { style: 'thin',   color: { rgb: '8FF0A4' } },
+            }
+          };
+        } else {
+          ws[addr].s = {
+            font:      { name: 'Arial', sz: 10 },
+            fill:      { fgColor: { rgb: bgBase }, patternType: 'solid' },
+            alignment: { vertical: 'center' },
+          };
+        }
+      }
     }
 
-    ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+    // Congelar primeira linha e ativar AutoFiltro
+    ws['!freeze']     = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
+    ws['!autofilter'] = { ref: `A1:J${linhas.length + 1}` };
 
-    const lastCol = XLSX.utils.encode_col(cabecalho.length - 1);
-    const lastRow = linhas.length + 1;
-    ws['!autofilter'] = { ref: `A1:${lastCol}${lastRow}` };
-
-    const wb = XLSX.utils.book_new();
-    wb.Props = {
-      Title:       titulo,
-      Subject:     'Controle de Presença — Seminário de Extensão',
-      Author:      'Painel de Controle',
-      CreatedDate: new Date()
-    };
-
-    XLSX.utils.book_append_sheet(wb, ws, 'Inscritos');
-
+    // Aba de instruções
     const wsInfo = XLSX.utils.aoa_to_sheet([
       ['Instruções de uso'],
       [''],
       ['• Use os filtros do Excel (seta nos cabeçalhos) para filtrar por curso, vínculo ou HC.'],
-      ['• Na coluna "Presença ✓" marque com ✓, X, ou qualquer símbolo para registrar a presença.'],
-      ['• A planilha está protegida apenas na leitura dos dados; a coluna de presença é editável.'],
+      ['• A coluna "Presença ✓" já reflete o que foi marcado no painel antes da exportação.'],
+      ['• Você pode editar a coluna de presença diretamente na planilha durante o evento.'],
       ['• Gerado em: ' + new Date().toLocaleString('pt-BR')],
       ['• Total de registros: ' + lista.length],
     ]);
     wsInfo['!cols'] = [{ wch: 80 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws,     'Inscritos');
     XLSX.utils.book_append_sheet(wb, wsInfo, 'Instruções');
 
     XLSX.writeFile(wb, nomeArquivo);
   }
 
+  // Excel — Todos
   document.getElementById('xlsTodosBtn').addEventListener('click', () => {
     if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
     const lista = [...todosInscritos].sort((a, b) =>
@@ -745,6 +767,7 @@
     gerarExcel(lista, 'Lista Completa de Inscritos', 'Inscritos_Todos.xlsx');
   });
 
+  // Excel — Somente HC
   document.getElementById('xlsHCBtn').addEventListener('click', () => {
     const comHC = todosInscritos
       .filter(i => (i.horas_complementares || '').toUpperCase() === 'SIM')
