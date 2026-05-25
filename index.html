@@ -570,11 +570,11 @@
 
 <header>
   <div class="tag">Inscrições Abertas · 2026-1</div>
-  <img src="capivaraagente.png" alt="Mascote" class="capivara-img">
-</div>
   <div class="title-row">
     <div class="title-text">
       <h1 id="mainTitle">Seminário de Extensão<br><em>3° Período</em></h1>
+      <img src="capivaraagente.png" alt="Mascote" class="capivara-img">
+    </div>
       <p class="subtitle" id="mainSubtitle">Inscrições abertas para todos.</p>
       <div class="event-date-row" id="eventDateRow">
         <div class="event-date-badge">
@@ -1227,7 +1227,7 @@
       }
       await updateDoc(doc(window.db,'inscricoes', docRef.id), { horas_complementares: 'SIM' });
       msg.classList.add('success');
-      msg.innerHTML = `✅ Presença confirmada com sucesso para <strong>${dadosDoc.nome}</strong>! <strong>4 horas complementares</strong> registradas.`;
+      msg.innerHTML = `✅ Presença confirmada com sucesso para <strong>${dadosDoc.nome}</strong>! <strong>5 horas complementares</strong> registradas.`;
     } catch (err) { console.error(err); msg.classList.add('error'); msg.innerHTML = 'Erro ao registrar. Tente novamente.'; }
   });
 
