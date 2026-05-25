@@ -282,7 +282,7 @@
 
   // ── CALCULAR TOTAL HORAS ───────────────────────────────────────────────────
   function calcTotalHoras(inscrito) {
-    const presenca  = inscrito.horas_complementares === 'SIM' ? 4 : 0;
+    const presenca  = inscrito.horas_complementares === 'SIM' ? 5 : 0;
     const quiz      = calcHorasQuiz(inscrito.acertos_questionario);
     return presenca + quiz;
   }
