@@ -1,799 +1,487 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Painel de Controle</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Painel de Controle — Seminário</title>
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
+      authDomain: "projetos-de-extensao.firebaseapp.com",
+      projectId: "projetos-de-extensao",
+      storageBucket: "projetos-de-extensao.firebasestorage.app",
+      messagingSenderId: "42869327067",
+      appId: "1:42869327067:web:84d72c5db659990934b8fe"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+    window.db = db;
+    window._fb = { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy };
+  </script>
+
+  <!-- SheetJS para Excel -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet"/>
 
   <style>
     :root {
-      --bg:        #050505;
-      --surface:   #101010;
-      --surface2:  #161616;
-      --gold:      #d4af55;
-      --gold-light:#e7c46d;
-      --border:    rgba(212,175,85,0.18);
-      --text:      #f3efe7;
-      --muted:     rgba(255,255,255,0.45);
-      --green:     #8ff0a4;
-      --red:       #ff7b7b;
+      --bg:#0d0d0d; --surface:#141414; --surface2:#1c1c1c;
+      --border:rgba(255,255,255,0.08); --border-active:rgba(212,175,85,0.6);
+      --gold:#d4af55; --gold-light:#e8cc7a;
+      --text:#f0ece4; --text-muted:rgba(240,236,228,0.45);
+      --error:#e05c5c; --success:#8ff0a4;
     }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Mono', monospace;
-      min-height: 100vh;
-      padding: 40px;
-      overflow-x: hidden;
-    }
-    body::before {
-      content:'';
-      position:fixed;
-      inset:0;
-      background: radial-gradient(ellipse at top, rgba(212,175,85,0.07), transparent 60%);
-      pointer-events:none;
-    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--text);font-family:'DM Mono',monospace;min-height:100vh;padding:40px 24px;}
+    body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(ellipse 80% 60% at 50% -10%,rgba(212,175,85,0.06) 0%,transparent 60%);pointer-events:none;}
+    h1{font-family:'Cormorant Garamond',serif;font-size:2.8rem;font-weight:300;color:var(--gold);margin-bottom:8px;}
+    .subtitle{font-size:11px;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:40px;}
 
-    .topbar {
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:30px;
-      margin-bottom:40px;
-      flex-wrap:wrap;
-    }
-    h1 {
-      font-family: 'Cormorant Garamond', serif;
-      font-size: clamp(2.6rem,6vw,4.5rem);
-      font-weight:300;
-      line-height:1;
-      margin-bottom:10px;
-    }
-    .subtitle { color:var(--muted); font-size:13px; letter-spacing:0.08em; }
-    .modo-badge {
-      margin-top:14px;
-      display:inline-flex;
-      align-items:center;
-      gap:10px;
-      padding:8px 14px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:rgba(255,255,255,0.02);
-      font-size:11px;
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-    }
-    .modo-dot { width:9px; height:9px; border-radius:50%; background:var(--green); }
+    /* CONTROLES */
+    .controls{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:32px;align-items:center;}
+    .toggle-group{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:14px 20px;}
+    .toggle-label{font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);}
+    .toggle-value{font-size:12px;color:var(--gold);}
+    .toggle-switch{position:relative;display:inline-block;width:44px;height:24px;cursor:pointer;}
+    .toggle-switch input{opacity:0;width:0;height:0;}
+    .slider{position:absolute;inset:0;background:rgba(255,255,255,0.08);border-radius:24px;transition:.3s;}
+    .slider::before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:var(--text-muted);border-radius:50%;transition:.3s;}
+    input:checked + .slider{background:var(--gold);}
+    input:checked + .slider::before{transform:translateX(20px);background:#000;}
+    .btn{padding:12px 22px;border-radius:4px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;transition:.2s;border:none;}
+    .btn-gold{background:var(--gold);color:#000;}
+    .btn-gold:hover{background:var(--gold-light);}
+    .btn-outline{background:transparent;color:var(--gold);border:1px solid rgba(212,175,85,0.4);}
+    .btn-outline:hover{background:rgba(212,175,85,0.08);}
+    .btn-danger{background:transparent;color:var(--error);border:1px solid rgba(224,92,92,0.4);}
+    .btn-danger:hover{background:rgba(224,92,92,0.08);}
 
-    .top-actions {
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .card {
-      background:rgba(255,255,255,0.02);
-      border:1px solid var(--border);
-      padding:20px 26px;
-      border-radius:8px;
-      min-width:200px;
-    }
-    .card-title  { color:var(--muted); font-size:10px; margin-bottom:8px; letter-spacing:0.14em; text-transform:uppercase; }
-    .card-number { color:var(--gold); font-size:1.8rem; }
+    /* STATS */
+    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:16px;margin-bottom:32px;}
+    .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;text-align:center;}
+    .stat-num{font-family:'Cormorant Garamond',serif;font-size:2.4rem;color:var(--gold);}
+    .stat-lbl{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-top:4px;}
 
-    .btn {
-      background:transparent;
-      border:1px solid var(--border);
-      color:var(--gold);
-      padding:13px 20px;
-      border-radius:6px;
-      cursor:pointer;
-      transition:0.25s;
-      font-family:'DM Mono',monospace;
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-      font-size:10px;
-      white-space:nowrap;
-    }
-    .btn:hover  { background:rgba(212,175,85,0.08); border-color:var(--gold); }
-    .btn.green  { border-color:rgba(143,240,164,0.35); color:var(--green); }
-    .btn.green:hover { background:rgba(143,240,164,0.08); border-color:var(--green); }
-    .btn.red    { border-color:rgba(255,123,123,0.35); color:var(--red); }
-    .btn.red:hover   { background:rgba(255,123,123,0.08); border-color:var(--red); }
-    .btn.blue   { border-color:rgba(100,160,255,0.35); color:#7eb8ff; }
-    .btn.blue:hover  { background:rgba(100,160,255,0.08); border-color:#7eb8ff; }
-    .btn.excel  { border-color:rgba(143,240,164,0.35); color:#7bffc8; }
-    .btn.excel:hover { background:rgba(143,240,164,0.08); border-color:#7bffc8; }
+    /* FILTRO */
+    .filter-bar{display:flex;gap:12px;margin-bottom:20px;flex-wrap:wrap;align-items:center;}
+    .filter-bar input{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;width:240px;outline:none;}
+    .filter-bar input:focus{border-color:var(--border-active);}
+    .filter-bar select{background:var(--surface);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;outline:none;}
 
-    .btn-divider {
-      width:1px; height:36px;
-      background:var(--border);
-      align-self:center;
-    }
+    /* TABELA */
+    .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
+    table{width:100%;border-collapse:collapse;font-size:11px;min-width:1100px;}
+    thead{background:rgba(212,175,85,0.07);}
+    th{padding:12px 14px;text-align:left;font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);border-bottom:1px solid rgba(212,175,85,0.15);white-space:nowrap;}
+    td{padding:11px 14px;border-bottom:1px solid var(--border);color:var(--text);vertical-align:middle;}
+    tr:last-child td{border-bottom:none;}
+    tr:hover td{background:rgba(255,255,255,0.02);}
+    .badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;}
+    .badge-sim{background:rgba(143,240,164,0.12);color:var(--success);border:1px solid rgba(143,240,164,0.25);}
+    .badge-nao{background:rgba(224,92,92,0.1);color:var(--error);border:1px solid rgba(224,92,92,0.2);}
+    .badge-quiz{background:rgba(212,175,85,0.1);color:var(--gold);border:1px solid rgba(212,175,85,0.2);}
+    .badge-empty{background:rgba(255,255,255,0.04);color:var(--text-muted);border:1px solid rgba(255,255,255,0.08);}
+    .loading{text-align:center;padding:40px;color:var(--text-muted);font-size:11px;letter-spacing:0.1em;}
+    .empty{text-align:center;padding:40px;color:var(--text-muted);}
 
-    .filters-bar {
-      display:flex;
-      gap:12px;
-      flex-wrap:wrap;
-      align-items:center;
-      margin-bottom:20px;
-    }
-    .filter-group { display:flex; flex-direction:column; gap:4px; }
-    .filter-group label { font-size:9px; letter-spacing:0.2em; text-transform:uppercase; color:var(--muted); }
-    .filter-group input,
-    .filter-group select {
-      background:var(--surface);
-      border:1px solid var(--border);
-      color:var(--text);
-      padding:10px 14px;
-      border-radius:4px;
-      font-family:'DM Mono',monospace;
-      font-size:11px;
-      outline:none;
-      transition:0.2s;
-      min-width:160px;
-    }
-    .filter-group input:focus,
-    .filter-group select:focus { border-color:rgba(212,175,85,0.5); }
-    .filter-clear { align-self:flex-end; padding:10px 18px; font-size:10px; }
+    /* TOAST */
+    .toast{position:fixed;bottom:32px;right:32px;background:var(--gold);color:#000;padding:14px 24px;border-radius:6px;font-size:12px;font-weight:400;letter-spacing:0.1em;opacity:0;transition:.3s;z-index:999;pointer-events:none;}
+    .toast.show{opacity:1;}
 
-    .table-wrap {
-      overflow-x:auto;
-      border:1px solid var(--border);
-      border-radius:10px;
-      background:rgba(255,255,255,0.02);
-      backdrop-filter:blur(12px);
-    }
-    table { width:100%; border-collapse:collapse; min-width:1200px; }
-    thead { background:rgba(212,175,85,0.08); }
-    th {
-      color:var(--gold);
-      font-size:11px;
-      letter-spacing:0.12em;
-      text-transform:uppercase;
-      font-weight:400;
-      padding:20px 18px;
-      text-align:left;
-      border-bottom:1px solid var(--border);
-      cursor:pointer;
-      user-select:none;
-      white-space:nowrap;
-    }
-    th:hover { color:var(--gold-light); }
-    th .sort-icon { margin-left:6px; opacity:0.5; font-size:10px; }
-    th.sorted .sort-icon { opacity:1; }
-    td {
-      padding:18px;
-      border-bottom:1px solid rgba(255,255,255,0.05);
-      color:rgba(255,255,255,0.82);
-      font-size:12px;
-      line-height:1.5;
-    }
-    tbody tr:hover { background:rgba(255,255,255,0.03); }
-    .status  { color:var(--green); }
-    .hc-sim  { color:var(--green); font-weight:bold; }
-    .hc-nao  { color:rgba(255,255,255,0.3); }
-    .loading { padding:40px; color:var(--muted); text-align:center; }
-    .count-bar { font-size:10px; color:var(--muted); letter-spacing:0.1em; margin-bottom:10px; }
-
-    .presenca-select {
-      background:var(--surface);
-      border:1px solid var(--border);
-      color:var(--text);
-      padding:6px 10px;
-      border-radius:4px;
-      font-family:'DM Mono',monospace;
-      font-size:11px;
-      outline:none;
-      cursor:pointer;
-      transition:0.2s;
-    }
-    .presenca-select:focus { border-color:rgba(212,175,85,0.5); }
-    .presenca-select.sim { color:var(--green); border-color:rgba(143,240,164,0.4); }
-    .presenca-select.nao { color:var(--red);   border-color:rgba(255,123,123,0.3); }
-
-    @media (max-width:900px) {
-      body { padding:20px; }
-      .topbar { flex-direction:column; }
+    @media(max-width:640px){
+      .controls{flex-direction:column;align-items:flex-start;}
+      .stats{grid-template-columns:1fr 1fr;}
+      .filter-bar input{width:100%;}
     }
   </style>
 </head>
 <body>
 
-<div class="topbar">
-  <div>
-    <h1>Painel de Controle</h1>
-    <div class="subtitle">Lista de inscritos do seminário</div>
-    <div class="modo-badge">
-      <span class="modo-dot"></span>
-      <span id="modoAtual">Modo inscrições ativo</span>
-    </div>
+<h1>Painel de Controle</h1>
+<p class="subtitle">Seminário de Extensão — 3° Período · 2026-1</p>
+
+<!-- CONTROLES PRINCIPAIS -->
+<div class="controls">
+  <!-- Toggle Horas -->
+  <div class="toggle-group">
+    <span class="toggle-label">Horas Complementares</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleHoras">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-value" id="horasStatus">Bloqueado</span>
   </div>
 
-  <div class="top-actions">
-    <div class="card">
-      <div class="card-title">Total de inscritos</div>
-      <div class="card-number" id="totalInscritos">0</div>
-    </div>
-
-    <button class="btn green" id="liberarHorasBtn">Liberar Horas Complementares</button>
-    <button class="btn red"   id="liberarInscricoesBtn">Liberar Inscrições</button>
-
-    <div class="btn-divider"></div>
-
-    <button class="btn blue"  id="pdfTodosBtn">PDF — Todos</button>
-    <button class="btn blue"  id="pdfHCBtn">PDF — Somente HC</button>
-
-    <div class="btn-divider"></div>
-
-    <button class="btn excel" id="xlsTodosBtn">Excel — Todos</button>
-    <button class="btn excel" id="xlsHCBtn">Excel — Somente HC</button>
-
-    <div class="btn-divider"></div>
-
-    <button class="btn" id="alterarSenhaBtn">Alterar Senha</button>
-    <button class="btn" onclick="window.location.href='index.html'">Voltar</button>
+  <!-- Toggle Quiz -->
+  <div class="toggle-group">
+    <span class="toggle-label">Questionário</span>
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggleQuiz">
+      <span class="slider"></span>
+    </label>
+    <span class="toggle-value" id="quizStatus">Bloqueado</span>
   </div>
+
+  <button class="btn btn-gold" id="recarregarBtn">↻ Atualizar</button>
+  <button class="btn btn-outline" id="exportExcelBtn">⬇ Excel</button>
+  <button class="btn btn-outline" id="exportPdfBtn">⬇ PDF</button>
+  <button class="btn btn-danger" id="voltarBtn">← Sair</button>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat-card"><div class="stat-num" id="statTotal">0</div><div class="stat-lbl">Total inscritos</div></div>
+  <div class="stat-card"><div class="stat-num" id="statPresenca">0</div><div class="stat-lbl">Presença confirmada</div></div>
+  <div class="stat-card"><div class="stat-num" id="statQuiz">0</div><div class="stat-lbl">Responderam quiz</div></div>
+  <div class="stat-card"><div class="stat-num" id="statMedia">—</div><div class="stat-lbl">Média de acertos</div></div>
 </div>
 
 <!-- FILTROS -->
-<div class="filters-bar">
-  <div class="filter-group">
-    <label>Buscar nome / e-mail</label>
-    <input type="text" id="filtroTexto" placeholder="Digite para filtrar…">
-  </div>
-  <div class="filter-group">
-    <label>Curso</label>
-    <select id="filtroCurso">
-      <option value="">Todos os cursos</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Vínculo</label>
-    <select id="filtroVinculo">
-      <option value="">Todos</option>
-      <option value="aluno">Aluno</option>
-      <option value="professor">Professor</option>
-      <option value="tae">TAE</option>
-      <option value="visitante_externo">Visitante externo</option>
-      <option value="egresso">Egresso</option>
-      <option value="outro">Outro</option>
-    </select>
-  </div>
-  <div class="filter-group">
-    <label>Horas Complementares</label>
-    <select id="filtroHC">
-      <option value="">Todos</option>
-      <option value="SIM">SIM</option>
-      <option value="NÃO">NÃO</option>
-    </select>
-  </div>
-  <button class="btn filter-clear" id="limparFiltrosBtn">Limpar filtros</button>
+<div class="filter-bar">
+  <input type="text" id="searchInput" placeholder="Buscar por nome, matrícula ou e-mail…">
+  <select id="filterPresenca">
+    <option value="">Todos</option>
+    <option value="SIM">Com presença</option>
+    <option value="NÃO">Sem presença</option>
+  </select>
+  <select id="filterQuiz">
+    <option value="">Todos (quiz)</option>
+    <option value="respondeu">Responderam</option>
+    <option value="nao">Não responderam</option>
+  </select>
 </div>
 
-<div class="count-bar" id="countBar"></div>
-
+<!-- TABELA -->
 <div class="table-wrap">
-  <table>
+  <table id="mainTable">
     <thead>
       <tr>
-        <th data-col="#">#<span class="sort-icon">↕</span></th>
-        <th data-col="nome">Nome<span class="sort-icon">↕</span></th>
-        <th data-col="matricula">Matrícula<span class="sort-icon">↕</span></th>
-        <th data-col="email">E-mail<span class="sort-icon">↕</span></th>
-        <th data-col="telefone">Telefone<span class="sort-icon">↕</span></th>
-        <th data-col="curso">Curso<span class="sort-icon">↕</span></th>
-        <th data-col="periodo">Período<span class="sort-icon">↕</span></th>
-        <th data-col="vinculo">Vínculo<span class="sort-icon">↕</span></th>
-        <th data-col="status">Status<span class="sort-icon">↕</span></th>
-        <th data-col="hc">HC<span class="sort-icon">↕</span></th>
-        <th>Presença</th>
+        <th>#</th>
+        <th>Nome</th>
+        <th>Matrícula</th>
+        <th>E-mail</th>
+        <th>Telefone</th>
+        <th>Vínculo</th>
+        <th>Curso</th>
+        <th>Período</th>
+        <th>Acertos Questionário</th>
+        <th>Horas Quiz</th>
+        <th>HC (Presença)</th>
+        <th>Total Horas</th>
+        <th>Inscrito em</th>
       </tr>
     </thead>
-    <tbody id="tabelaInscritos">
-      <tr><td colspan="11" class="loading">Carregando inscrições…</td></tr>
+    <tbody id="tableBody">
+      <tr><td colspan="13" class="loading">Carregando dados…</td></tr>
     </tbody>
   </table>
 </div>
 
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════ SCRIPTS ══════════════════════ -->
 <script type="module">
-  import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import {
-    getFirestore, collection, getDocs, query, orderBy,
-    doc, getDoc, setDoc, updateDoc
-  } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
-    authDomain: "projetos-de-extensao.firebaseapp.com",
-    projectId: "projetos-de-extensao",
-    storageBucket: "projetos-de-extensao.firebasestorage.app",
-    messagingSenderId: "42869327067",
-    appId: "1:42869327067:web:84d72c5db659990934b8fe",
-    measurementId: "G-5YR6YD1Z24"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const db  = getFirestore(app);
+  const { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy } = window._fb;
+  const db = window.db;
 
   let todosInscritos = [];
-  let dadosFiltrados = [];
-  let sortCol        = null;
-  let sortAsc        = true;
 
-  // Mapa de presença: id do inscrito → 'SIM' | 'NÃO' | ''
-  const presencaMap = {};
-
-  // ── configurações ──────────────────────────────────────────────────────────
-  async function inicializarConfiguracoes() {
-    const ref  = doc(db, 'configuracoes', 'painel');
-    const snap = await getDoc(ref);
-    if (!snap.exists()) {
-      await setDoc(ref, { senha: 'BENAC', horasLiberadas: false });
-      atualizarModoVisual(false);
-    } else {
-      atualizarModoVisual(snap.data().horasLiberadas);
-    }
+  // ── AUTH CHECK ─────────────────────────────────────────────────────────────
+  if (sessionStorage.getItem('painelAutorizado') !== 'true') {
+    window.location.href = 'seminario-extensao.html';
   }
 
-  function atualizarModoVisual(hl) {
-    const texto = document.getElementById('modoAtual');
-    const dot   = document.querySelector('.modo-dot');
-    if (hl) {
-      texto.textContent    = 'Modo horas complementares ativo';
-      dot.style.background = '#8ff0a4';
-    } else {
-      texto.textContent    = 'Modo inscrições ativo';
-      dot.style.background = '#d4af55';
-    }
+  // ── TOAST ──────────────────────────────────────────────────────────────────
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
   }
 
-  // ── carregar inscritos ─────────────────────────────────────────────────────
-  async function carregarInscritos() {
+  // ── CARREGAR CONFIG ────────────────────────────────────────────────────────
+  async function carregarConfig() {
     try {
-      const q        = query(collection(db, 'inscricoes'), orderBy('inscrito_em', 'desc'));
-      const snapshot = await getDocs(q);
+      const ref  = doc(db, 'configuracoes', 'painel');
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, { horasLiberadas: false, quizLiberado: false, senha: 'admin123' });
+      }
+      const dados = snap.exists() ? snap.data() : { horasLiberadas: false, quizLiberado: false };
 
-      todosInscritos = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      document.getElementById('totalInscritos').textContent = todosInscritos.length;
+      const tH = document.getElementById('toggleHoras');
+      const tQ = document.getElementById('toggleQuiz');
+      tH.checked = !!dados.horasLiberadas;
+      tQ.checked = !!dados.quizLiberado;
+      document.getElementById('horasStatus').textContent = dados.horasLiberadas ? 'Liberado' : 'Bloqueado';
+      document.getElementById('quizStatus').textContent  = dados.quizLiberado  ? 'Liberado' : 'Bloqueado';
+    } catch (err) { console.error(err); }
+  }
 
-      const cursos = [...new Set(todosInscritos.map(i => i.curso).filter(Boolean))].sort();
-      const sel    = document.getElementById('filtroCurso');
-      cursos.forEach(c => {
-        const opt = document.createElement('option');
-        opt.value = c; opt.textContent = c;
-        sel.appendChild(opt);
-      });
+  // ── TOGGLE HORAS ──────────────────────────────────────────────────────────
+  document.getElementById('toggleHoras').addEventListener('change', async function () {
+    const val = this.checked;
+    try {
+      await setDoc(doc(db,'configuracoes','painel'), { horasLiberadas: val }, { merge: true });
+      document.getElementById('horasStatus').textContent = val ? 'Liberado' : 'Bloqueado';
+      showToast(val ? 'Horas complementares liberadas!' : 'Horas complementares bloqueadas.');
+    } catch (err) { console.error(err); }
+  });
 
-      aplicarFiltros();
+  // ── TOGGLE QUIZ ───────────────────────────────────────────────────────────
+  document.getElementById('toggleQuiz').addEventListener('change', async function () {
+    const val = this.checked;
+    try {
+      await setDoc(doc(db,'configuracoes','painel'), { quizLiberado: val }, { merge: true });
+      document.getElementById('quizStatus').textContent = val ? 'Liberado' : 'Bloqueado';
+      showToast(val ? 'Questionário liberado para respostas!' : 'Questionário bloqueado.');
+    } catch (err) { console.error(err); }
+  });
+
+  // ── CALCULAR HORAS QUIZ ────────────────────────────────────────────────────
+  function calcHorasQuiz(acertosStr) {
+    if (!acertosStr || acertosStr === '' || acertosStr === undefined) return 0;
+    const n = parseInt(acertosStr.toString().split('/')[0]) || 0;
+    if (n === 12)      return 20;
+    if (n >= 10)       return 10;
+    if (n >= 5)        return 5;
+    return 0;
+  }
+
+  // ── CARREGAR INSCRITOS ────────────────────────────────────────────────────
+  async function carregarInscritos() {
+    document.getElementById('tableBody').innerHTML =
+      '<tr><td colspan="13" class="loading">Carregando dados…</td></tr>';
+    try {
+      const q    = query(collection(db,'inscricoes'));
+      const snap = await getDocs(q);
+      todosInscritos = [];
+      snap.forEach(d => todosInscritos.push({ id: d.id, ...d.data() }));
+      atualizarStats();
+      renderTabela(todosInscritos);
     } catch (err) {
       console.error(err);
-      document.getElementById('tabelaInscritos').innerHTML =
-        `<tr><td colspan="11" class="loading">Erro ao carregar dados.</td></tr>`;
+      document.getElementById('tableBody').innerHTML =
+        '<tr><td colspan="13" class="empty">Erro ao carregar dados.</td></tr>';
     }
   }
 
-  // ── filtros ────────────────────────────────────────────────────────────────
-  function aplicarFiltros() {
-    const texto   = document.getElementById('filtroTexto').value.toLowerCase();
-    const curso   = document.getElementById('filtroCurso').value;
-    const vinculo = document.getElementById('filtroVinculo').value;
-    const hc      = document.getElementById('filtroHC').value;
-
-    dadosFiltrados = todosInscritos.filter(i => {
-      const matchTexto   = !texto   || (i.nome||'').toLowerCase().includes(texto) || (i.email||'').toLowerCase().includes(texto);
-      const matchCurso   = !curso   || i.curso   === curso;
-      const matchVinculo = !vinculo || i.vinculo === vinculo;
-      const hcVal        = (i.horas_complementares || 'NÃO').toUpperCase();
-      const matchHC      = !hc     || hcVal === hc;
-      return matchTexto && matchCurso && matchVinculo && matchHC;
-    });
-
-    if (sortCol) ordenar(sortCol, false);
-    else renderizar();
-  }
-
-  ['filtroTexto','filtroCurso','filtroVinculo','filtroHC'].forEach(id => {
-    document.getElementById(id).addEventListener('input',  aplicarFiltros);
-    document.getElementById(id).addEventListener('change', aplicarFiltros);
-  });
-
-  document.getElementById('limparFiltrosBtn').addEventListener('click', () => {
-    document.getElementById('filtroTexto').value   = '';
-    document.getElementById('filtroCurso').value   = '';
-    document.getElementById('filtroVinculo').value = '';
-    document.getElementById('filtroHC').value      = '';
-    aplicarFiltros();
-  });
-
-  // ── ordenação ─────────────────────────────────────────────────────────────
-  function ordenar(col, toggleDir = true) {
-    if (toggleDir) {
-      sortAsc = (sortCol === col) ? !sortAsc : true;
-      sortCol = col;
-    }
-
-    dadosFiltrados.sort((a, b) => {
-      let va = '', vb = '';
-      if      (col === 'nome')      { va = a.nome||'';      vb = b.nome||''; }
-      else if (col === 'matricula') { va = a.matricula||''; vb = b.matricula||''; }
-      else if (col === 'email')     { va = a.email||'';     vb = b.email||''; }
-      else if (col === 'curso')     { va = a.curso||'';     vb = b.curso||''; }
-      else if (col === 'periodo')   { va = +(a.periodo)||0; vb = +(b.periodo)||0; return sortAsc ? va-vb : vb-va; }
-      else if (col === 'vinculo')   { va = a.vinculo||'';   vb = b.vinculo||''; }
-      else if (col === 'hc')        { va = a.horas_complementares||'NÃO'; vb = b.horas_complementares||'NÃO'; }
-      return sortAsc
-        ? String(va).localeCompare(String(vb), 'pt-BR')
-        : String(vb).localeCompare(String(va), 'pt-BR');
-    });
-
-    document.querySelectorAll('th').forEach(th => th.classList.remove('sorted'));
-    document.querySelectorAll('th[data-col]').forEach(th => {
-      if (th.dataset.col === col) {
-        th.classList.add('sorted');
-        th.querySelector('.sort-icon').textContent = sortAsc ? ' ↑' : ' ↓';
-      } else {
-        const ic = th.querySelector('.sort-icon');
-        if (ic) ic.textContent = ' ↕';
+  // ── STATS ──────────────────────────────────────────────────────────────────
+  function atualizarStats() {
+    const total    = todosInscritos.length;
+    const presenca = todosInscritos.filter(i => i.horas_complementares === 'SIM').length;
+    const quiz     = todosInscritos.filter(i => i.acertos_questionario && i.acertos_questionario !== '').length;
+    let somaAcertos = 0, countAcertos = 0;
+    todosInscritos.forEach(i => {
+      if (i.acertos_questionario && i.acertos_questionario !== '') {
+        somaAcertos += parseInt(i.acertos_questionario.toString().split('/')[0]) || 0;
+        countAcertos++;
       }
     });
-
-    renderizar();
+    document.getElementById('statTotal').textContent   = total;
+    document.getElementById('statPresenca').textContent = presenca;
+    document.getElementById('statQuiz').textContent    = quiz;
+    document.getElementById('statMedia').textContent   = countAcertos ? (somaAcertos/countAcertos).toFixed(1) + '/12' : '—';
   }
 
-  document.querySelectorAll('th[data-col]').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      if (col && col !== '#') ordenar(col);
-    });
-  });
-
-  // ── renderizar tabela ──────────────────────────────────────────────────────
-  function renderizar() {
-    const tabela = document.getElementById('tabelaInscritos');
-    document.getElementById('countBar').textContent =
-      `Exibindo ${dadosFiltrados.length} de ${todosInscritos.length} inscrito(s)`;
-
-    if (dadosFiltrados.length === 0) {
-      tabela.innerHTML = `<tr><td colspan="11" class="loading">Nenhum registro encontrado.</td></tr>`;
+  // ── RENDER TABELA ──────────────────────────────────────────────────────────
+  function renderTabela(lista) {
+    const tbody = document.getElementById('tableBody');
+    if (!lista.length) {
+      tbody.innerHTML = '<tr><td colspan="13" class="empty">Nenhum inscrito encontrado.</td></tr>';
       return;
     }
+    tbody.innerHTML = lista.map((i, idx) => {
+      const hcSim = i.horas_complementares === 'SIM';
+      const temQuiz = i.acertos_questionario && i.acertos_questionario !== '';
+      const horasQuiz  = calcHorasQuiz(i.acertos_questionario);
+      const horasPresenca = hcSim ? 4 : 0;
+      const horasTotal    = horasPresenca + horasQuiz;
 
-    tabela.innerHTML = dadosFiltrados.map((d, idx) => {
-      const hcVal  = (d.horas_complementares || 'NÃO').toUpperCase();
-      const hcTag  = hcVal === 'SIM'
-        ? `<span class="hc-sim">SIM</span>`
-        : `<span class="hc-nao">NÃO</span>`;
-      const pVal   = presencaMap[d.id] || '';
-      const pClass = pVal === 'SIM' ? 'sim' : pVal === 'NÃO' ? 'nao' : '';
-      return `
-        <tr>
-          <td>${idx + 1}</td>
-          <td>${d.nome      || '-'}</td>
-          <td>${d.matricula || '-'}</td>
-          <td>${d.email     || '-'}</td>
-          <td>${d.telefone  || '-'}</td>
-          <td>${d.curso     || '-'}</td>
-          <td>${d.periodo   || '-'}</td>
-          <td>${d.vinculo   || '-'}</td>
-          <td><span class="status">${d.status || 'confirmado'}</span></td>
-          <td>${hcTag}</td>
-          <td>
-            <select class="presenca-select ${pClass}" data-id="${d.id}"
-              onchange="window._onPresenca(this)">
-              <option value=""    ${pVal===''    ? 'selected':''}>—</option>
-              <option value="SIM" ${pVal==='SIM' ? 'selected':''}>SIM</option>
-              <option value="NÃO" ${pVal==='NÃO' ? 'selected':''}>NÃO</option>
-            </select>
-          </td>
-        </tr>`;
+      const data = i.inscrito_em?.toDate?.()
+        ? i.inscrito_em.toDate().toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric', hour:'2-digit', minute:'2-digit' })
+        : '—';
+
+      return `<tr>
+        <td style="color:var(--text-muted)">${idx + 1}</td>
+        <td><strong>${i.nome || '—'}</strong></td>
+        <td style="color:var(--text-muted)">${i.matricula || '—'}</td>
+        <td style="color:var(--text-muted)">${i.email || '—'}</td>
+        <td>${i.telefone || '—'}</td>
+        <td>${i.vinculo || '—'}</td>
+        <td>${i.curso || '—'}</td>
+        <td style="text-align:center">${i.periodo || '—'}</td>
+        <td style="text-align:center">
+          ${temQuiz
+            ? `<span class="badge badge-quiz">${i.acertos_questionario}</span>`
+            : `<span class="badge badge-empty">—</span>`}
+        </td>
+        <td style="text-align:center">
+          ${horasQuiz > 0 ? `<span class="badge badge-quiz">+${horasQuiz}h</span>` : `<span class="badge badge-empty">0h</span>`}
+        </td>
+        <td style="text-align:center">
+          <span class="badge ${hcSim ? 'badge-sim' : 'badge-nao'}">${hcSim ? 'SIM (4h)' : 'NÃO'}</span>
+        </td>
+        <td style="text-align:center;font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold-light)">
+          ${horasTotal > 0 ? `${horasTotal}h` : '0h'}
+        </td>
+        <td style="color:var(--text-muted);font-size:10px">${data}</td>
+      </tr>`;
     }).join('');
   }
 
-  // Handler global de presença
-  window._onPresenca = function(sel) {
-    const id  = sel.dataset.id;
-    const val = sel.value;
-    presencaMap[id] = val;
-    sel.className = 'presenca-select ' + (val === 'SIM' ? 'sim' : val === 'NÃO' ? 'nao' : '');
-  };
-
-  // ── helper: enriquecer lista com presença do mapa ─────────────────────────
-  function listaComPresenca(lista) {
-    return lista.map(d => ({
-      ...d,
-      presenca: presencaMap[d.id] || ''
-    }));
-  }
-
-  // ── gerar PDF ─────────────────────────────────────────────────────────────
-  // A4 landscape = 841.89 × 595.28 pt. Margens 36 pt cada lado → útil = 769.89 pt
-  // Colunas (11 no total) — soma exata = 770 pt:
-  //   #(20) | Nome(148) | Matric(70) | Email(142) | Tel(74) | Curso(88) | Per(26) | Vinculo(62) | Status(56) | HC(26) | Presença(58)
-  //   20+148+70+142+74+88+26+62+56+26+58 = 770
-  function gerarPDF(lista, titulo) {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'a4' });
-
-    // Cabeçalho do documento
-    pdf.setFontSize(15);
-    pdf.setTextColor(30, 30, 30);
-    pdf.text('Seminario de Extensao - 3 Periodo', 36, 38);
-
-    pdf.setFontSize(10);
-    pdf.setTextColor(100, 100, 100);
-    pdf.text(titulo, 36, 54);
-    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 36, 67);
-
-    const enriched = listaComPresenca(lista);
-
-    // Cabeçalhos — "Per." alinhado à esquerda igual às outras colunas
-    const head = [['#', 'Nome', 'Matricula', 'E-mail', 'Telefone', 'Curso', 'Per.', 'Vinculo', 'Status', 'HC', 'Presenca']];
-
-    const body = enriched.map((d, i) => [
-      i + 1,
-      d.nome      || '-',
-      d.matricula || '-',
-      d.email     || '-',
-      d.telefone  || '-',
-      d.curso     || '-',
-      d.periodo   || '-',
-      d.vinculo   || '-',
-      d.status    || 'confirmado',
-      (d.horas_complementares || 'NAO').toUpperCase(),
-      d.presenca  || ''
-    ]);
-
-    pdf.autoTable({
-      startY: 80,
-      head,
-      body,
-      styles: {
-        font:        'helvetica',
-        fontSize:    8,
-        cellPadding: { top: 4, bottom: 4, left: 4, right: 4 },
-        overflow:    'hidden',
-        halign:      'left',   // padrão: tudo alinhado à esquerda
-        valign:      'middle',
-      },
-      headStyles: {
-        fillColor:  [25, 25, 25],
-        textColor:  [212, 175, 85],
-        fontStyle:  'bold',
-        fontSize:   7.5,
-        halign:     'left',    // cabeçalhos também à esquerda — corrige o "Per." deslocado
-        valign:     'middle',
-        cellPadding:{ top: 5, bottom: 5, left: 4, right: 4 },
-      },
-      alternateRowStyles: { fillColor: [246, 246, 246] },
-      // Larguras calibradas para caber em 770 pt úteis (margens 36+36)
-      columnStyles: {
-        0:  { cellWidth: 20,  halign: 'center' },  // #
-        1:  { cellWidth: 148 },                    // Nome
-        2:  { cellWidth: 70  },                    // Matrícula
-        3:  { cellWidth: 142 },                    // E-mail
-        4:  { cellWidth: 74  },                    // Telefone
-        5:  { cellWidth: 88  },                    // Curso
-        6:  { cellWidth: 26,  halign: 'left'   },  // Per. — esquerda, compacto
-        7:  { cellWidth: 62  },                    // Vínculo
-        8:  { cellWidth: 56  },                    // Status
-        9:  { cellWidth: 26,  halign: 'center' },  // HC
-        10: { cellWidth: 58,  halign: 'center',    // Presença
-              fillColor: [240, 255, 244] },
-      },
-      margin:     { left: 36, right: 36 },
-      tableWidth: 'wrap',
-      // Cor dinâmica na coluna de presença
-      didParseCell: function(data) {
-        if (data.column.index === 10 && data.section === 'body') {
-          const val = String(data.cell.raw || '');
-          if (val === 'SIM') {
-            data.cell.styles.textColor  = [20, 120, 50];
-            data.cell.styles.fontStyle  = 'bold';
-            data.cell.styles.fillColor  = [215, 255, 225];
-          } else if (val === 'NÃO') {
-            data.cell.styles.textColor  = [190, 40, 40];
-            data.cell.styles.fontStyle  = 'bold';
-            data.cell.styles.fillColor  = [255, 235, 235];
-          }
-        }
-      },
-    });
-
-    const pageCount = pdf.internal.getNumberOfPages();
-    for (let p = 1; p <= pageCount; p++) {
-      pdf.setPage(p);
-      pdf.setFontSize(7.5);
-      pdf.setTextColor(160);
-      pdf.text(
-        `Total: ${lista.length} registro(s)   |   Pagina ${p} de ${pageCount}`,
-        36,
-        pdf.internal.pageSize.getHeight() - 18
+  // ── FILTROS ────────────────────────────────────────────────────────────────
+  function aplicarFiltros() {
+    const busca    = document.getElementById('searchInput').value.toLowerCase();
+    const presenca = document.getElementById('filterPresenca').value;
+    const quiz     = document.getElementById('filterQuiz').value;
+    let lista = [...todosInscritos];
+    if (busca) {
+      lista = lista.filter(i =>
+        (i.nome      || '').toLowerCase().includes(busca) ||
+        (i.matricula || '').toLowerCase().includes(busca) ||
+        (i.email     || '').toLowerCase().includes(busca)
       );
     }
-
-    const nomeArq = titulo.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9_]/g,'') + '.pdf';
-    pdf.save(nomeArq);
+    if (presenca) { lista = lista.filter(i => i.horas_complementares === presenca); }
+    if (quiz === 'respondeu') { lista = lista.filter(i => i.acertos_questionario && i.acertos_questionario !== ''); }
+    if (quiz === 'nao')       { lista = lista.filter(i => !i.acertos_questionario || i.acertos_questionario === ''); }
+    renderTabela(lista);
   }
-
-  // PDF — Todos
-  document.getElementById('pdfTodosBtn').addEventListener('click', () => {
-    if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
-    const lista = [...todosInscritos].sort((a, b) =>
-      (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' })
-    );
-    gerarPDF(lista, 'Lista Completa de Inscritos');
+  ['searchInput','filterPresenca','filterQuiz'].forEach(id => {
+    document.getElementById(id).addEventListener('input', aplicarFiltros);
+    document.getElementById(id).addEventListener('change', aplicarFiltros);
   });
 
-  // PDF — Somente HC
-  document.getElementById('pdfHCBtn').addEventListener('click', () => {
-    const comHC = todosInscritos
-      .filter(i => (i.horas_complementares||'').toUpperCase() === 'SIM')
-      .sort((a, b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' }));
-    if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
-    gerarPDF(comHC, 'Inscritos_HC_SIM');
-  });
-
-  // ── gerar Excel ────────────────────────────────────────────────────────────
-  function gerarExcel(lista, titulo, nomeArquivo) {
-    const XLSX = window.XLSX;
-
-    const enriched = listaComPresenca(lista);
-
-    const cabecalho = [
-      '#', 'Nome', 'Matrícula', 'E-mail', 'Telefone',
-      'Curso', 'Período', 'Vínculo', 'HC', 'Presença ✓'
-    ];
-
-    const linhas = enriched.map((d, i) => [
-      i + 1,
-      d.nome      || '',
-      d.matricula || '',
-      d.email     || '',
-      d.telefone  || '',
-      d.curso     || '',
-      d.periodo   || '',
-      d.vinculo   || '',
-      (d.horas_complementares || 'NÃO').toUpperCase(),
-      d.presenca  || ''
-    ]);
-
-    const wsData = [cabecalho, ...linhas];
-    const ws = XLSX.utils.aoa_to_sheet(wsData);
-
+  // ── EXPORTAR EXCEL ────────────────────────────────────────────────────────
+  document.getElementById('exportExcelBtn').addEventListener('click', () => {
+    const linhas = todosInscritos.map((i, idx) => {
+      const hcSim      = i.horas_complementares === 'SIM';
+      const horasQuiz  = calcHorasQuiz(i.acertos_questionario);
+      const horasTotal = (hcSim ? 4 : 0) + horasQuiz;
+      const data = i.inscrito_em?.toDate?.()
+        ? i.inscrito_em.toDate().toLocaleString('pt-BR')
+        : '';
+      return {
+        '#':                    idx + 1,
+        'Nome':                 i.nome      || '',
+        'Matrícula':            i.matricula || '',
+        'E-mail':               i.email     || '',
+        'Telefone':             i.telefone  || '',
+        'Vínculo':              i.vinculo   || '',
+        'Curso':                i.curso     || '',
+        'Período':              i.periodo   || '',
+        'Acertos Questionário': i.acertos_questionario || '',
+        'Horas Quiz':           horasQuiz   > 0 ? `+${horasQuiz}h` : '0h',
+        'HC Presença':          hcSim ? 'SIM (4h)' : 'NÃO',
+        'Total de Horas':       `${horasTotal}h`,
+        'Inscrito em':          data
+      };
+    });
+    const ws  = XLSX.utils.json_to_sheet(linhas);
+    const wb  = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Inscrições');
+    // Larguras
     ws['!cols'] = [
-      { wch: 5  },  // #
-      { wch: 36 },  // Nome
-      { wch: 16 },  // Matrícula
-      { wch: 36 },  // E-mail
-      { wch: 18 },  // Telefone
-      { wch: 30 },  // Curso
-      { wch: 8  },  // Período
-      { wch: 20 },  // Vínculo
-      { wch: 8  },  // HC
-      { wch: 16 },  // Presença
+      {wch:4},{wch:28},{wch:14},{wch:26},{wch:18},{wch:14},{wch:28},{wch:8},
+      {wch:20},{wch:10},{wch:14},{wch:12},{wch:20}
     ];
+    XLSX.writeFile(wb, `inscricoes_seminario_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast('Excel exportado!');
+  });
 
-    const headerStyle = {
-      font:      { bold: true, color: { rgb: 'D4AF55' }, name: 'Arial', sz: 10 },
-      fill:      { fgColor: { rgb: '1E1E1E' }, patternType: 'solid' },
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border:    { bottom: { style: 'medium', color: { rgb: 'D4AF55' } } }
-    };
-    cabecalho.forEach((_, colIdx) => {
-      const addr = XLSX.utils.encode_cell({ r: 0, c: colIdx });
-      if (ws[addr]) ws[addr].s = headerStyle;
+  // ── EXPORTAR PDF ──────────────────────────────────────────────────────────
+  document.getElementById('exportPdfBtn').addEventListener('click', () => {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
+
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(16);
+    pdf.setTextColor(212, 175, 85);
+    pdf.text('Seminário de Extensão — 3° Período', 14, 18);
+
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(150,140,120);
+    pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}   |   Total: ${todosInscritos.length} inscritos`, 14, 26);
+
+    const colunas = [
+      '#','Nome','Matrícula','E-mail','Telefone','Vínculo','Curso','Per.',
+      'Acertos Quiz','Hrs Quiz','HC Presença','Total Hrs'
+    ];
+    const linhas = todosInscritos.map((i, idx) => {
+      const hcSim     = i.horas_complementares === 'SIM';
+      const horasQuiz = calcHorasQuiz(i.acertos_questionario);
+      return [
+        idx + 1,
+        i.nome      || '',
+        i.matricula || '',
+        i.email     || '',
+        i.telefone  || '',
+        i.vinculo   || '',
+        i.curso     || '',
+        i.periodo   || '',
+        i.acertos_questionario || '—',
+        horasQuiz > 0 ? `+${horasQuiz}h` : '0h',
+        hcSim ? 'SIM (4h)' : 'NÃO',
+        `${(hcSim ? 4 : 0) + horasQuiz}h`
+      ];
     });
 
-    for (let r = 1; r <= linhas.length; r++) {
-      const par    = r % 2 === 1;
-      const bgBase = par ? 'FFFFFF' : 'F5F5F5';
-
-      for (let c = 0; c < cabecalho.length; c++) {
-        const addr = XLSX.utils.encode_cell({ r, c });
-        if (!ws[addr]) ws[addr] = { t: 's', v: '' };
-
-        if (c === 9) {
-          const val = ws[addr].v;
-          let bg = 'F0FFF4', fc = '555555', bold = false;
-          if (val === 'SIM') { bg = 'D7FFE1'; fc = '14783A'; bold = true; }
-          if (val === 'NÃO') { bg = 'FFEBEB'; fc = 'BE2828'; bold = true; }
-          ws[addr].s = {
-            font:      { name: 'Arial', sz: 10, bold, color: { rgb: fc } },
-            fill:      { fgColor: { rgb: bg }, patternType: 'solid' },
-            alignment: { horizontal: 'center', vertical: 'center' },
-            border: {
-              left:  { style: 'medium', color: { rgb: '8FF0A4' } },
-              right: { style: 'thin',   color: { rgb: '8FF0A4' } },
-            }
-          };
-        } else {
-          ws[addr].s = {
-            font:      { name: 'Arial', sz: 10 },
-            fill:      { fgColor: { rgb: bgBase }, patternType: 'solid' },
-            alignment: { vertical: 'center' },
-          };
-        }
+    pdf.autoTable({
+      head:       [colunas],
+      body:       linhas,
+      startY:     32,
+      styles:     { fontSize: 7.5, cellPadding: 3, font: 'helvetica' },
+      headStyles: { fillColor: [30,25,10], textColor: [212,175,85], fontStyle:'bold' },
+      alternateRowStyles: { fillColor: [22,20,15] },
+      bodyStyles: { textColor: [220,215,200], fillColor: [18,16,12] },
+      columnStyles: {
+        0:  { cellWidth: 8 },
+        1:  { cellWidth: 44 },
+        2:  { cellWidth: 26 },
+        3:  { cellWidth: 48 },
+        4:  { cellWidth: 30 },
+        5:  { cellWidth: 20 },
+        6:  { cellWidth: 40 },
+        7:  { cellWidth: 10 },
+        8:  { cellWidth: 22 },
+        9:  { cellWidth: 14 },
+        10: { cellWidth: 20 },
+        11: { cellWidth: 16 }
       }
-    }
-
-    ws['!freeze']     = { xSplit: 0, ySplit: 1, topLeftCell: 'A2', activePane: 'bottomLeft' };
-    ws['!autofilter'] = { ref: `A1:J${linhas.length + 1}` };
-
-    const wsInfo = XLSX.utils.aoa_to_sheet([
-      ['Instruções de uso'],
-      [''],
-      ['• Use os filtros do Excel (seta nos cabeçalhos) para filtrar por curso, vínculo ou HC.'],
-      ['• A coluna "Presença ✓" reflete o que foi marcado no painel antes da exportação.'],
-      ['• Você pode editar a coluna de presença diretamente na planilha durante o evento.'],
-      ['• Gerado em: ' + new Date().toLocaleString('pt-BR')],
-      ['• Total de registros: ' + lista.length],
-    ]);
-    wsInfo['!cols'] = [{ wch: 80 }];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws,     'Inscritos');
-    XLSX.utils.book_append_sheet(wb, wsInfo, 'Instruções');
-
-    XLSX.writeFile(wb, nomeArquivo);
-  }
-
-  // Excel — Todos
-  document.getElementById('xlsTodosBtn').addEventListener('click', () => {
-    if (!todosInscritos.length) { alert('Nenhum inscrito para exportar.'); return; }
-    const lista = [...todosInscritos].sort((a, b) =>
-      (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' })
-    );
-    gerarExcel(lista, 'Lista Completa de Inscritos', 'Inscritos_Todos.xlsx');
+    });
+    pdf.save(`inscricoes_seminario_${new Date().toISOString().slice(0,10)}.pdf`);
+    showToast('PDF exportado!');
   });
 
-  // Excel — Somente HC
-  document.getElementById('xlsHCBtn').addEventListener('click', () => {
-    const comHC = todosInscritos
-      .filter(i => (i.horas_complementares||'').toUpperCase() === 'SIM')
-      .sort((a, b) => (a.nome||'').localeCompare(b.nome||'', 'pt-BR', { sensitivity: 'base' }));
-    if (!comHC.length) { alert('Nenhum inscrito com Horas Complementares confirmadas.'); return; }
-    gerarExcel(comHC, 'Inscritos com HC', 'Inscritos_HC.xlsx');
+  // ── VOLTAR ─────────────────────────────────────────────────────────────────
+  document.getElementById('voltarBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('painelAutorizado');
+    window.location.href = 'seminario-extensao.html';
   });
 
-  // ── liberar horas / inscrições ─────────────────────────────────────────────
-  document.getElementById('liberarHorasBtn').addEventListener('click', async () => {
-    try {
-      await updateDoc(doc(db, 'configuracoes', 'painel'), { horasLiberadas: true });
-      atualizarModoVisual(true);
-      alert('Modo de horas complementares ativado.');
-    } catch (err) { console.error(err); alert('Erro ao liberar horas.'); }
+  // ── ATUALIZAR ──────────────────────────────────────────────────────────────
+  document.getElementById('recarregarBtn').addEventListener('click', () => {
+    carregarInscritos();
+    showToast('Dados atualizados!');
   });
 
-  document.getElementById('liberarInscricoesBtn').addEventListener('click', async () => {
-    try {
-      await updateDoc(doc(db, 'configuracoes', 'painel'), { horasLiberadas: false });
-      atualizarModoVisual(false);
-      alert('Modo inscrições ativado novamente.');
-    } catch (err) { console.error(err); alert('Erro ao liberar inscrições.'); }
-  });
-
-  // ── alterar senha ──────────────────────────────────────────────────────────
-  document.getElementById('alterarSenhaBtn').addEventListener('click', async () => {
-    const novaSenha = prompt('Digite a nova senha:');
-    if (!novaSenha) return;
-    try {
-      await updateDoc(doc(db, 'configuracoes', 'painel'), { senha: novaSenha });
-      alert('Senha alterada com sucesso.');
-    } catch (err) { console.error(err); alert('Erro ao alterar senha.'); }
-  });
-
-  // ── inicializar ────────────────────────────────────────────────────────────
-  await inicializarConfiguracoes();
+  // ── INIT ───────────────────────────────────────────────────────────────────
+  await carregarConfig();
   await carregarInscritos();
+  setInterval(carregarInscritos, 15000);
 </script>
 </body>
 </html>
