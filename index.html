@@ -684,7 +684,7 @@
             <tr>
               <td><span class="badge-presenca">AUTOMÁTICO</span> Inscrição + Presença</td>
               <td>Ficar até o final do seminário</td>
-              <td>4h</td>
+              <td>5h</td>
             </tr>
             <tr>
               <td><span class="badge-opcional">OPCIONAL</span> Questionário</td>
@@ -705,7 +705,7 @@
           <tfoot>
             <tr class="total-row">
               <td colspan="2"><strong>Máximo possível</strong></td>
-              <td>24h</td>
+              <td>25h</td>
             </tr>
           </tfoot>
         </table>
@@ -730,7 +730,7 @@
         <input type="tel" id="hcTelefone" placeholder="(00) 00000-0000">
       </div>
 
-      <button class="btn-submit" id="receberHorasBtn">Confirmar Presença (4h)</button>
+      <button class="btn-submit" id="receberHorasBtn">Confirmar Presença (5h)</button>
       <div class="hc-msg" id="hcMsg"></div>
 
       <!-- ══════════ QUESTIONÁRIO ══════════ -->
@@ -1204,7 +1204,7 @@
     return snapshot;
   }
 
-  // ── CONFIRMAR PRESENÇA (4h) ───────────────────────────────────────────────
+  // ── CONFIRMAR PRESENÇA (5h) ───────────────────────────────────────────────
   document.getElementById('receberHorasBtn').addEventListener('click', async () => {
     const mat = document.getElementById('hcMatricula').value.trim();
     const tel = document.getElementById('hcTelefone').value.replace(/\D/g,'');
@@ -1350,7 +1350,7 @@
       ✅ Acertos: <strong>${acertos}</strong> &nbsp;|&nbsp; ❌ Erros: <strong>${erros}</strong><br><br>
       ${faixa}<br><br>
       <strong>Resumo de horas:</strong><br>
-      • Presença no seminário: <strong>4h</strong><br>
+      • Presença no seminário: <strong>5h</strong><br>
       • Bônus pelo questionário: <strong>+${horasExtras}h</strong><br>
       • <strong>Total de horas complementares: ${horasTotal}h</strong><br><br>
       <em style="font-size:10px;color:var(--text-muted);">
