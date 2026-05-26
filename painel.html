@@ -595,25 +595,35 @@
   }
 
   function gerarPdf(lista, titulo) {
+    // 1. Ordenar a lista alfabeticamente pelo nome antes de exportar
+    const listaOrdenada = [...lista].sort((a, b) => 
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+    );
+
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
+    
+    // Cabeçalho do Documento
     pdf.setFont('helvetica','bold');
     pdf.setFontSize(16);
     pdf.setTextColor(212, 175, 85);
     pdf.text('Seminário de Extensão — 3° Período', 14, 18);
     pdf.setFont('helvetica','normal');
     pdf.setFontSize(9);
-    pdf.setTextColor(150,140,120);
-    pdf.text(`${titulo} · Gerado em: ${new Date().toLocaleString('pt-BR')} · Total: ${lista.length} registro(s)`, 14, 26);
+    pdf.setTextColor(100, 100, 100); // Texto cinzento escuro para o subtítulo
+    pdf.text(`${titulo} · Gerado em: ${new Date().toLocaleString('pt-BR')} · Total: ${listaOrdenada.length} registro(s)`, 14, 26);
 
     pdf.autoTable({
       head:       [colunasExportPdf()],
-      body:       linhasExportPdf(lista),
+      body:       linhasExportPdf(listaOrdenada), // Utiliza a lista já ordenada
       startY:     32,
       styles:     { fontSize: 7.5, cellPadding: 3, font: 'helvetica' },
-      headStyles: { fillColor: [30,25,10], textColor: [212,175,85], fontStyle:'bold' },
-      alternateRowStyles: { fillColor: [22,20,15] },
-      bodyStyles: { textColor: [220,215,200], fillColor: [18,16,12] },
+      
+      // 2. Cores claras corrigidas para evitar o fundo preto
+      headStyles: { fillColor: [212, 175, 85], textColor: [255, 255, 255], fontStyle:'bold' }, // Fundo Dourado, Texto Branco
+      alternateRowStyles: { fillColor: [248, 248, 248] }, // Cinzento muito claro para as linhas alternadas
+      bodyStyles: { textColor: [40, 40, 40], fillColor: [255, 255, 255] }, // Texto escuro, fundo branco
+      
       columnStyles: {
         0:  { cellWidth: 8 },
         1:  { cellWidth: 44 },
@@ -629,19 +639,32 @@
       }
     });
     pdf.save(`seminario_${titulo.toLowerCase().replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
-    showToast('PDF exportado!');
+    showToast('PDF exportado com sucesso!');
   }
 
   function gerarExcel(lista, titulo) {
-    const ws  = XLSX.utils.json_to_sheet(linhasExport(lista));
+    // 1. Ordenar a lista alfabeticamente pelo nome antes de exportar
+    const listaOrdenada = [...lista].sort((a, b) => 
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+    );
+
+    const ws  = XLSX.utils.json_to_sheet(linhasExport(listaOrdenada)); // Utiliza a lista já ordenada
     const wb  = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Inscrições');
+    
+    // Largura das colunas
     ws['!cols'] = [
       {wch:4},{wch:28},{wch:14},{wch:28},{wch:18},{wch:28},{wch:8},{wch:16},
       {wch:14},{wch:24},{wch:10}
     ];
+
+    // 3. Adicionar Filtros Automáticos ao Excel
+    if (ws['!ref']) {
+      ws['!autofilter'] = { ref: ws['!ref'] };
+    }
+
     XLSX.writeFile(wb, `seminario_${titulo.toLowerCase().replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
-    showToast('Excel exportado!');
+    showToast('Excel exportado com sucesso!');
   }
 
   // ── EXPORTAR ──────────────────────────────────────────────────────────────
