@@ -18,10 +18,8 @@
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-    import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc }
-
-      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+   import { getFirestore, enableIndexedDbPersistence, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 
     const firebaseConfig = {
@@ -47,7 +45,13 @@
     const app = initializeApp(firebaseConfig);
 
     const db  = getFirestore(app);
-
+enableIndexedDbPersistence(db).catch((err) => {
+  if (err.code == 'failed-precondition') {
+    console.warn("Múltiplas abas abertas, persistência ativada apenas na primeira.");
+  } else if (err.code == 'unimplemented') {
+    console.warn("Navegador não suporta persistência offline.");
+  }
+});
 
 
     window.db              = db;
