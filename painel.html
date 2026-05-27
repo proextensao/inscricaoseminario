@@ -7,8 +7,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy }
-      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
@@ -22,7 +22,7 @@
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
     window.db = db;
-    window._fb = { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy };
+   window._fb = { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot };
   </script>
 
   <!-- SheetJS para Excel -->
@@ -251,7 +251,7 @@
 
 <!-- ══════════════════════ SCRIPTS ══════════════════════ -->
 <script type="module">
-  const { collection, getDocs, doc, getDoc, updateDoc, setDoc } = window._fb;
+  const { collection, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot } = window._fb;
   const db = window.db;
 
   let todosInscritos = [];
@@ -359,20 +359,28 @@
     } catch (err) { console.error(err); }
   });
 
-  // ── CARREGAR INSCRITOS ────────────────────────────────────────────────────
-  async function carregarInscritos() {
+ // ── CARREGAR INSCRITOS EM TEMPO REAL ──────────────────────────────────────
+  function carregarInscritos() {
     try {
-      const snap = await getDocs(collection(db, 'inscricoes'));
-      todosInscritos = [];
-      snap.forEach(d => todosInscritos.push({ id: d.id, ...d.data() }));
-      document.getElementById('statTotal').textContent = todosInscritos.length;
-      popularFiltrosCurso();
-      popularFiltrosVinculo();
-      aplicarFiltros();
+      const inscricoesRef = collection(db, 'inscricoes');
+      
+      onSnapshot(inscricoesRef, (snap) => {
+        todosInscritos = [];
+        snap.forEach(d => todosInscritos.push({ id: d.id, ...d.data() }));
+        document.getElementById('statTotal').textContent = todosInscritos.length;
+        popularFiltrosCurso();
+        popularFiltrosVinculo();
+        aplicarFiltros();
+      }, (error) => {
+        console.error("Erro no onSnapshot: ", error);
+        document.getElementById('tableBody').innerHTML =
+          '<tr><td colspan="11" class="empty">Erro ao carregar dados em tempo real.</td></tr>';
+      });
+      
     } catch (err) {
       console.error(err);
       document.getElementById('tableBody').innerHTML =
-        '<tr><td colspan="11" class="empty">Erro ao carregar dados.</td></tr>';
+        '<tr><td colspan="11" class="empty">Erro ao configurar o banco de dados.</td></tr>';
     }
   }
 
@@ -714,7 +722,6 @@
   // ── INIT ───────────────────────────────────────────────────────────────────
   await carregarConfig();
   await carregarInscritos();
-  setInterval(carregarInscritos, 15000);
 </script>
 </body>
 </html>
