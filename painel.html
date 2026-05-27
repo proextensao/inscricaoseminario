@@ -281,10 +281,11 @@
   }
 
   // ── CALCULAR TOTAL HORAS ───────────────────────────────────────────────────
+  // HC = 5h automáticas (se hc_registrado === 'SIM') + horas do questionário
   function calcTotalHoras(inscrito) {
-    const presenca  = inscrito.horas_complementares === 'SIM' ? 5 : 0;
-    const quiz      = calcHorasQuiz(inscrito.acertos_questionario);
-    return presenca + quiz;
+    const base = inscrito.hc_registrado === 'SIM' ? 5 : 0;
+    const quiz = calcHorasQuiz(inscrito.acertos_questionario);
+    return base + quiz;
   }
 
   // ── CARREGAR CONFIG ────────────────────────────────────────────────────────
@@ -405,13 +406,11 @@
 
     tbody.innerHTML = lista.map((inscrito, idx) => {
       const totalHoras = calcTotalHoras(inscrito);
-      const horasQuiz  = calcHorasQuiz(inscrito.acertos_questionario);
       const temAcertos = inscrito.acertos_questionario !== null &&
                          inscrito.acertos_questionario !== undefined &&
                          inscrito.acertos_questionario !== '';
       const acertosNum = temAcertos ? parseInt(inscrito.acertos_questionario) || 0 : null;
       const pct        = temAcertos ? Math.round((acertosNum / 12) * 100) : null;
-      const hcSim      = inscrito.horas_complementares === 'SIM';
 
       // Horas totais na coluna HC
       let hcDisplay;
@@ -445,28 +444,28 @@
         <td style="text-align:center;">${hcDisplay}</td>
         <td style="text-align:center;">${acertosDisplay}</td>
         <td style="text-align:center;">
-          <select class="presenca-select ${hcSim ? 'sim' : 'nao'}"
+          <select class="presenca-select ${inscrito.presenca === 'SIM' ? 'sim' : 'nao'}"
                   data-id="${inscrito.id}"
                   onchange="window.atualizarPresenca(this)">
-            <option value="SIM" ${hcSim ? 'selected' : ''}>SIM</option>
-            <option value="NÃO" ${!hcSim ? 'selected' : ''}>NÃO</option>
+            <option value="SIM" ${inscrito.presenca === 'SIM' ? 'selected' : ''}>SIM</option>
+            <option value="NÃO" ${inscrito.presenca !== 'SIM' ? 'selected' : ''}>NÃO</option>
           </select>
         </td>
       </tr>`;
     }).join('');
   }
 
-  // ── ATUALIZAR PRESENÇA (EDITÁVEL) ─────────────────────────────────────────
+  // ── ATUALIZAR PRESENÇA (EDITÁVEL) — apenas controle de recepção ──────────
   window.atualizarPresenca = async function(select) {
     const id  = select.dataset.id;
     const val = select.value;
     select.classList.toggle('sim', val === 'SIM');
     select.classList.toggle('nao', val === 'NÃO');
     try {
-      await updateDoc(doc(db, 'inscricoes', id), { horas_complementares: val });
+      await updateDoc(doc(db, 'inscricoes', id), { presenca: val });
       // Atualizar local
       const inscrito = todosInscritos.find(i => i.id === id);
-      if (inscrito) inscrito.horas_complementares = val;
+      if (inscrito) inscrito.presenca = val;
       showToast(`Presença atualizada para ${val}.`);
     } catch (err) {
       console.error(err);
@@ -492,7 +491,7 @@
     }
     if (curso)   lista = lista.filter(i => i.curso   === curso);
     if (vinculo) lista = lista.filter(i => i.vinculo === vinculo);
-    if (hc)      lista = lista.filter(i => i.horas_complementares === hc);
+    if (hc)      lista = lista.filter(i => (hc === 'SIM' ? i.hc_registrado === 'SIM' : i.hc_registrado !== 'SIM'));
 
     // Ordenação
     lista.sort((a, b) => {
@@ -541,14 +540,13 @@
   // ── HELPER LINHAS EXPORT ──────────────────────────────────────────────────
   function linhasExport(lista) {
     return lista.map((i, idx) => {
-      const totalHoras = calcTotalHoras(i);
-      const horasQuiz  = calcHorasQuiz(i.acertos_questionario);
-      const hcSim      = i.horas_complementares === 'SIM';
-      const temAcertos = i.acertos_questionario !== null &&
-                         i.acertos_questionario !== undefined &&
-                         i.acertos_questionario !== '';
-      const acertosNum = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
-      const pct        = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '—';
+      const totalHoras  = calcTotalHoras(i);
+      const temAcertos  = i.acertos_questionario !== null &&
+                          i.acertos_questionario !== undefined &&
+                          i.acertos_questionario !== '';
+      const acertosNum  = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
+      const pct         = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '—';
+      const presencaVal = i.presenca === 'SIM' ? 'SIM' : 'NÃO';
       return {
         '#':                    idx + 1,
         'Nome':                 i.nome       || '',
@@ -560,7 +558,7 @@
         'Vínculo':              i.vinculo    || '',
         'HC (Total Horas)':     `${totalHoras}h`,
         'Acertos Questionário': temAcertos ? `${acertosNum}/12 (${pct})` : '—',
-        'Presença':             hcSim ? 'SIM' : 'NÃO'
+        'Presença':             presencaVal
       };
     });
   }
@@ -571,13 +569,13 @@
 
   function linhasExportPdf(lista) {
     return lista.map((i, idx) => {
-      const totalHoras = calcTotalHoras(i);
-      const hcSim      = i.horas_complementares === 'SIM';
-      const temAcertos = i.acertos_questionario !== null &&
-                         i.acertos_questionario !== undefined &&
-                         i.acertos_questionario !== '';
-      const acertosNum = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
-      const pct        = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '';
+      const totalHoras  = calcTotalHoras(i);
+      const presencaVal = i.presenca === 'SIM' ? 'SIM' : 'NÃO';
+      const temAcertos  = i.acertos_questionario !== null &&
+                          i.acertos_questionario !== undefined &&
+                          i.acertos_questionario !== '';
+      const acertosNum  = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
+      const pct         = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '';
       return [
         idx + 1,
         i.nome       || '',
@@ -589,7 +587,7 @@
         i.vinculo    || '',
         `${totalHoras}h`,
         temAcertos ? `${acertosNum}/12 (${pct})` : '—',
-        hcSim ? 'SIM' : 'NÃO'
+        presencaVal
       ];
     });
   }
@@ -671,11 +669,11 @@
   document.getElementById('exportPdfTodosBtn').addEventListener('click',
     () => gerarPdf(todosInscritos, 'Todos'));
   document.getElementById('exportPdfHcBtn').addEventListener('click',
-    () => gerarPdf(todosInscritos.filter(i => i.horas_complementares === 'SIM'), 'Somente HC'));
+    () => gerarPdf(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
   document.getElementById('exportExcelTodosBtn').addEventListener('click',
     () => gerarExcel(todosInscritos, 'Todos'));
   document.getElementById('exportExcelHcBtn').addEventListener('click',
-    () => gerarExcel(todosInscritos.filter(i => i.horas_complementares === 'SIM'), 'Somente HC'));
+    () => gerarExcel(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
 
   // ── ALTERAR SENHA ─────────────────────────────────────────────────────────
   document.getElementById('alterarSenhaBtn').addEventListener('click', () => {
