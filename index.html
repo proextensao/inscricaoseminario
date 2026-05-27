@@ -1,1367 +1,2826 @@
 <!DOCTYPE html>
+
 <html lang="pt-BR">
+
 <head>
+
   <meta charset="UTF-8" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Seminário de Extensão — Inscrições</title>
 
+
+
   <!-- FIREBASE -->
+
   <script type="module">
+
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+
     import { getFirestore, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc }
+
       from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+
+
     const firebaseConfig = {
+
       apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
+
       authDomain: "projetos-de-extensao.firebaseapp.com",
+
       projectId: "projetos-de-extensao",
+
       storageBucket: "projetos-de-extensao.firebasestorage.app",
+
       messagingSenderId: "42869327067",
+
       appId: "1:42869327067:web:84d72c5db659990934b8fe",
+
       measurementId: "G-5YR6YD1Z24"
+
     };
 
+
+
     const app = initializeApp(firebaseConfig);
+
     const db  = getFirestore(app);
 
+
+
     window.db              = db;
+
     window.collection      = collection;
+
     window.addDoc          = addDoc;
+
     window.serverTimestamp = serverTimestamp;
+
     window.doc             = doc;
+
     window.getDoc          = getDoc;
+
     window.updateDoc       = updateDoc;
+
     window.getDocs         = getDocs;
+
     window.query           = query;
+
     window.where           = where;
+
     window.setDoc          = setDoc;
+
   </script>
 
+
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
 
+
+
   <style>
+
     :root {
+
       --bg:           #0d0d0d;
+
       --surface:      #141414;
+
       --surface2:     #1c1c1c;
+
       --border:       rgba(255,255,255,0.08);
+
       --border-active:rgba(212,175,85,0.6);
+
       --gold:         #d4af55;
+
       --gold-light:   #e8cc7a;
+
       --text:         #f0ece4;
+
       --text-muted:   rgba(240,236,228,0.45);
+
       --error:        #e05c5c;
+
       --success:      #8ff0a4;
+
       --warning:      #f0c040;
+
     }
+
     * { margin:0; padding:0; box-sizing:border-box; }
+
     body {
+
       background: var(--bg);
+
       color: var(--text);
+
       font-family: 'DM Mono', monospace;
+
       min-height: 100vh;
+
       display: flex;
+
       flex-direction: column;
+
       align-items: center;
+
       overflow-x: hidden;
+
     }
+
     body::before {
+
       content: '';
+
       position: fixed;
+
       inset: 0;
+
       background-image: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(212,175,85,0.08) 0%, transparent 60%);
+
       pointer-events: none;
+
     }
+
     header {
+
       width: 100%;
+
       max-width: 720px;
+
       padding: 72px 24px 0;
+
       position: relative;
+
       z-index: 1;
+
     }
+
     .tag {
+
       display: inline-block;
+
       font-size: 10px;
+
       letter-spacing: 0.25em;
+
       text-transform: uppercase;
+
       color: var(--gold);
+
       border: 1px solid rgba(212,175,85,0.3);
+
       padding: 4px 12px;
+
       margin-bottom: 32px;
+
     }
+
     h1 {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: clamp(2.4rem, 7vw, 4.8rem);
+
       font-weight: 300;
+
       line-height: 1.08;
+
     }
+
     h1 em { color: var(--gold); }
+
     .subtitle {
+
       margin-top: 20px;
+
       font-size: 12px;
+
       color: var(--text-muted);
+
       line-height: 1.8;
+
       letter-spacing: 0.08em;
+
     }
+
     .event-date-row {
+
       display: flex;
+
       align-items: center;
+
       gap: 28px;
+
       margin-top: 28px;
+
       flex-wrap: wrap;
+
     }
+
     .event-date-badge {
+
       display: flex;
+
       align-items: center;
+
       gap: 12px;
+
       background: rgba(212,175,85,0.07);
+
       border: 1px solid rgba(212,175,85,0.25);
+
       border-radius: 4px;
+
       padding: 10px 18px;
+
     }
+
     .event-date-badge .icon { font-size: 14px; opacity: 0.7; }
+
     .event-date-badge .date-label {
+
       font-size: 10px;
+
       letter-spacing: 0.22em;
+
       text-transform: uppercase;
+
       color: var(--text-muted);
+
       margin-bottom: 2px;
+
     }
+
     .event-date-badge .date-value {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: 1.15rem;
+
       font-weight: 400;
+
       color: var(--gold-light);
+
       letter-spacing: 0.04em;
+
     }
+
     .countdown-wrap { display: flex; gap: 12px; align-items: center; }
+
     .countdown-unit { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+
     .countdown-num {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: 1.6rem;
+
       font-weight: 300;
+
       color: var(--gold);
+
       line-height: 1;
+
       min-width: 38px;
+
       text-align: center;
+
     }
+
     .countdown-lbl { font-size: 8px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+
     .countdown-sep { font-family: 'Cormorant Garamond', serif; font-size: 1.4rem; color: rgba(212,175,85,0.3); margin-bottom: 10px; }
+
     .countdown-expired { font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--gold); opacity: 0.7; font-style: italic; }
+
     .divider {
+
       width: 100%;
+
       max-width: 720px;
+
       height: 1px;
+
       background: linear-gradient(90deg, transparent, var(--gold), transparent);
+
       opacity: 0.25;
+
       margin: 48px 0;
+
     }
+
     .form-container {
+
       width: 100%;
+
       max-width: 720px;
+
       padding: 0 24px;
+
       position: relative;
+
       z-index: 1;
+
     }
+
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
     .field { display: flex; flex-direction: column; gap: 8px; }
+
     .field.full { grid-column: 1 / -1; }
+
     label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+
     input, select {
+
       background: var(--surface);
+
       border: 1px solid var(--border);
+
       color: var(--text);
+
       padding: 14px 16px;
+
       border-radius: 4px;
+
       outline: none;
+
       width: 100%;
+
       font-family: 'DM Mono', monospace;
+
       transition: 0.25s;
+
     }
+
     input:focus, select:focus { border-color: var(--border-active); background: var(--surface2); }
+
     input.error { border-color: var(--error); }
+
     .error-msg { display: none; color: var(--error); font-size: 10px; }
+
     .field.has-error .error-msg { display: block; }
+
     .form-footer {
+
       margin-top: 36px;
+
       display: flex;
+
       justify-content: space-between;
+
       gap: 20px;
+
       flex-wrap: wrap;
+
       align-items: center;
+
     }
+
     .privacy-note { max-width: 340px; font-size: 10px; line-height: 1.8; color: var(--text-muted); }
+
     .btn-submit {
+
       background: var(--gold);
+
       color: #000;
+
       border: none;
+
       padding: 16px 40px;
+
       cursor: pointer;
+
       font-family: 'DM Mono', monospace;
+
       letter-spacing: 0.2em;
+
       text-transform: uppercase;
+
       border-radius: 3px;
+
       transition: 0.2s;
+
       font-size: 12px;
+
     }
+
     .btn-submit:hover { background: var(--gold-light); transform: translateY(-2px); }
+
     .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
     .success-panel {
+
       display: none;
+
       text-align: center;
+
       padding: 64px 24px;
+
       animation: fadeIn 0.6s ease;
+
     }
+
     .success-panel.visible { display: block; }
+
     .success-icon { font-size: 52px; margin-bottom: 24px; }
+
     .success-panel h2 {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: 2.8rem;
+
       color: var(--gold);
+
       margin-bottom: 16px;
+
     }
+
     .success-panel p { color: var(--text-muted); line-height: 1.8; letter-spacing: 0.08em; }
+
     footer {
+
       margin-top: 80px;
+
       padding: 32px 24px;
+
       font-size: 10px;
+
       color: var(--text-muted);
+
       text-align: center;
+
       letter-spacing: 0.15em;
+
     }
+
     #outroCursoWrap { display: none; }
+
     #outroCursoWrap.visible { display: flex; }
+
     #adminBtn {
+
       margin-top: 28px;
+
       background: transparent;
+
       border: 1px solid rgba(212,175,85,0.35);
+
       color: var(--gold);
+
       padding: 12px 22px;
+
       border-radius: 4px;
+
       font-family: 'DM Mono', monospace;
+
       font-size: 10px;
+
       letter-spacing: 0.18em;
+
       text-transform: uppercase;
+
       cursor: pointer;
+
       transition: 0.25s;
+
     }
+
     #adminBtn:hover { background: rgba(212,175,85,0.08); border-color: var(--gold); }
 
+
+
     /* ── HC CONTAINER ── */
+
     .hc-container { display: none; width: 100%; animation: fadeIn 0.6s ease; }
+
     .hc-container.visible { display: block; }
+
     .hc-box {
+
       background: rgba(255,255,255,0.02);
+
       border: 1px solid rgba(212,175,85,0.2);
+
       border-radius: 10px;
+
       padding: 42px;
+
       backdrop-filter: blur(12px);
+
     }
+
     .hc-title {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: 2.4rem;
+
       color: var(--gold);
+
       margin-bottom: 14px;
+
       font-weight: 300;
+
     }
+
     .hc-subtitle { color: var(--text-muted); margin-bottom: 24px; line-height: 1.8; font-size: 13px; }
+
     .hc-msg { margin-top: 20px; font-size: 12px; letter-spacing: 0.06em; line-height: 1.6; }
+
     .hc-msg.success { color: var(--success); }
+
     .hc-msg.error   { color: var(--error); }
 
+
+
     /* ── TABELA DE HORAS ── */
+
     .horas-tabela {
+
       background: rgba(212,175,85,0.05);
+
       border: 1px solid rgba(212,175,85,0.2);
+
       border-radius: 8px;
+
       padding: 20px 24px;
+
       margin-bottom: 28px;
+
     }
+
     .horas-tabela-title {
+
       font-size: 10px;
+
       letter-spacing: 0.22em;
+
       text-transform: uppercase;
+
       color: var(--gold);
+
       margin-bottom: 16px;
+
     }
+
     .horas-tabela table {
+
       width: 100%;
+
       border-collapse: collapse;
+
       font-size: 11px;
+
     }
+
     .horas-tabela th {
+
       text-align: left;
+
       color: var(--text-muted);
+
       font-size: 9px;
+
       letter-spacing: 0.2em;
+
       text-transform: uppercase;
+
       padding-bottom: 10px;
+
       border-bottom: 1px solid rgba(212,175,85,0.15);
+
     }
+
     .horas-tabela td {
+
       padding: 8px 0;
+
       border-bottom: 1px solid rgba(255,255,255,0.04);
+
       color: var(--text);
+
       font-size: 11px;
+
     }
+
     .horas-tabela td:last-child { color: var(--gold-light); font-weight: 400; text-align: right; }
+
     .horas-tabela .total-row td {
+
       border-top: 1px solid rgba(212,175,85,0.2);
+
       border-bottom: none;
+
       padding-top: 12px;
+
       color: var(--gold);
+
       font-size: 12px;
+
     }
+
     .badge-presenca {
+
       display: inline-block;
+
       background: rgba(143,240,164,0.12);
+
       color: var(--success);
+
       border: 1px solid rgba(143,240,164,0.25);
+
       padding: 2px 8px;
+
       border-radius: 3px;
+
       font-size: 9px;
+
       letter-spacing: 0.1em;
+
     }
+
     .badge-opcional {
+
       display: inline-block;
+
       background: rgba(212,175,85,0.1);
+
       color: var(--gold);
+
       border: 1px solid rgba(212,175,85,0.25);
+
       padding: 2px 8px;
+
       border-radius: 3px;
+
       font-size: 9px;
+
       letter-spacing: 0.1em;
+
     }
+
+
 
     /* ── DIVISOR OU ── */
+
     .or-divider { display: flex; align-items: center; gap: 14px; margin: 22px 0; }
+
     .or-divider::before, .or-divider::after { content: ''; flex: 1; height: 1px; background: rgba(212,175,85,0.15); }
+
     .or-divider span { font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--text-muted); }
 
+
+
     /* ── QUESTIONÁRIO ── */
+
     .quiz-section {
+
       margin-top: 40px;
+
       border-top: 1px solid rgba(212,175,85,0.15);
+
       padding-top: 36px;
+
     }
+
     .quiz-header { margin-bottom: 24px; }
+
     .quiz-header h3 {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: 1.8rem;
+
       color: var(--gold);
+
       font-weight: 300;
+
       margin-bottom: 8px;
+
     }
+
     .quiz-header p { font-size: 11px; color: var(--text-muted); line-height: 1.7; }
 
+
+
     /* QUIZ LOCKED */
+
     .quiz-locked {
+
       background: rgba(255,255,255,0.02);
+
       border: 1px dashed rgba(212,175,85,0.2);
+
       border-radius: 8px;
+
       padding: 32px;
+
       text-align: center;
+
     }
+
     .quiz-locked .lock-icon { font-size: 28px; margin-bottom: 12px; opacity: 0.5; }
+
     .quiz-locked p { font-size: 11px; color: var(--text-muted); }
 
+
+
     /* QUIZ UNLOCK AREA */
+
     .quiz-unlock-area {
+
       margin-top: 18px;
+
       display: flex;
+
       gap: 10px;
+
       justify-content: center;
+
       align-items: center;
+
       flex-wrap: wrap;
+
     }
+
     .quiz-unlock-area input {
+
       background: var(--surface);
+
       border: 1px solid var(--border);
+
       color: var(--text);
+
       padding: 10px 14px;
+
       border-radius: 4px;
+
       font-family: 'DM Mono', monospace;
+
       font-size: 11px;
+
       width: 200px;
+
       outline: none;
+
     }
+
     .quiz-unlock-area input:focus { border-color: var(--border-active); }
+
     .btn-unlock {
+
       background: transparent;
+
       color: var(--gold);
+
       border: 1px solid rgba(212,175,85,0.4);
+
       padding: 10px 20px;
+
       cursor: pointer;
+
       font-family: 'DM Mono', monospace;
+
       font-size: 10px;
+
       letter-spacing: 0.15em;
+
       text-transform: uppercase;
+
       border-radius: 3px;
+
       transition: 0.2s;
+
     }
+
     .btn-unlock:hover { background: rgba(212,175,85,0.08); }
+
     .unlock-msg { font-size: 10px; color: var(--error); margin-top: 8px; text-align: center; }
 
+
+
     .quiz-body { display: none; }
+
     .quiz-body.visible { display: block; }
+
     .quiz-ident {
+
       background: rgba(255,255,255,0.02);
+
       border: 1px solid rgba(212,175,85,0.2);
+
       border-radius: 8px;
+
       padding: 24px;
+
       margin-bottom: 28px;
+
     }
+
     .quiz-ident p { font-size: 11px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.6; }
+
     .quiz-form { display: flex; flex-direction: column; gap: 28px; }
+
     .question-card {
+
       background: rgba(255,255,255,0.02);
+
       border: 1px solid rgba(255,255,255,0.07);
+
       border-radius: 8px;
+
       padding: 24px;
+
       transition: border-color 0.3s;
+
     }
+
     .question-card.correct { border-color: rgba(143,240,164,0.4); background: rgba(143,240,164,0.03); }
+
     .question-card.wrong   { border-color: rgba(224,92,92,0.4);   background: rgba(224,92,92,0.03); }
+
     .question-num {
+
       font-size: 9px;
+
       letter-spacing: 0.25em;
+
       text-transform: uppercase;
+
       color: var(--gold);
+
       margin-bottom: 8px;
+
     }
+
     .question-level {
+
       display: inline-block;
+
       font-size: 8px;
+
       letter-spacing: 0.15em;
+
       text-transform: uppercase;
+
       padding: 2px 6px;
+
       border-radius: 3px;
+
       margin-left: 8px;
+
     }
+
     .level-facil  { background: rgba(143,240,164,0.12); color: var(--success); border: 1px solid rgba(143,240,164,0.2); }
+
     .level-medio  { background: rgba(212,175,85,0.12);  color: var(--gold);    border: 1px solid rgba(212,175,85,0.2); }
+
     .level-dificil{ background: rgba(224,92,92,0.12);   color: var(--error);   border: 1px solid rgba(224,92,92,0.2); }
+
     .question-text { font-size: 13px; line-height: 1.7; margin-bottom: 16px; color: var(--text); }
+
     .options { display: flex; flex-direction: column; gap: 8px; }
+
     .option {
+
       display: flex;
+
       align-items: flex-start;
+
       gap: 12px;
+
       padding: 10px 14px;
+
       border: 1px solid rgba(255,255,255,0.07);
+
       border-radius: 4px;
+
       cursor: pointer;
+
       transition: all 0.2s;
+
       font-size: 12px;
+
       line-height: 1.5;
+
     }
+
     .option:hover { border-color: rgba(212,175,85,0.3); background: rgba(212,175,85,0.03); }
+
     .option input[type="radio"] { display: none; }
+
     .option-letter {
+
       min-width: 22px;
+
       height: 22px;
+
       border: 1px solid rgba(212,175,85,0.3);
+
       border-radius: 50%;
+
       display: flex;
+
       align-items: center;
+
       justify-content: center;
+
       font-size: 9px;
+
       color: var(--gold);
+
       flex-shrink: 0;
+
       margin-top: 1px;
+
     }
+
     .option.selected { border-color: var(--gold); background: rgba(212,175,85,0.07); }
+
     .option.selected .option-letter { background: var(--gold); color: #000; }
+
     .option.correct-answer { border-color: var(--success) !important; background: rgba(143,240,164,0.08) !important; }
+
     .option.correct-answer .option-letter { background: var(--success) !important; color: #000 !important; border-color: var(--success) !important; }
+
     .option.wrong-answer { border-color: var(--error) !important; background: rgba(224,92,92,0.08) !important; }
+
     .option.wrong-answer .option-letter { background: var(--error) !important; color: #fff !important; border-color: var(--error) !important; }
+
     .option.disabled { cursor: default; pointer-events: none; }
+
     .question-feedback {
+
       margin-top: 12px;
+
       font-size: 11px;
+
       padding: 8px 12px;
+
       border-radius: 4px;
+
       display: none;
+
     }
+
     .question-feedback.show { display: block; }
+
     .question-feedback.ok  { background: rgba(143,240,164,0.08); color: var(--success); border: 1px solid rgba(143,240,164,0.2); }
+
     .question-feedback.err { background: rgba(224,92,92,0.08); color: var(--error); border: 1px solid rgba(224,92,92,0.2); }
+
     .quiz-actions { margin-top: 32px; display: flex; gap: 16px; flex-wrap: wrap; align-items: center; }
+
     .btn-secondary {
+
       background: transparent;
+
       color: var(--gold);
+
       border: 1px solid rgba(212,175,85,0.4);
+
       padding: 14px 28px;
+
       cursor: pointer;
+
       font-family: 'DM Mono', monospace;
+
       letter-spacing: 0.15em;
+
       text-transform: uppercase;
+
       border-radius: 3px;
+
       transition: 0.2s;
+
       font-size: 11px;
+
     }
+
     .btn-secondary:hover { background: rgba(212,175,85,0.08); }
 
+
+
     /* ── RESULTADO QUIZ ── */
+
     .quiz-result {
+
       display: none;
+
       background: rgba(212,175,85,0.05);
+
       border: 1px solid rgba(212,175,85,0.25);
+
       border-radius: 10px;
+
       padding: 32px;
+
       margin-top: 32px;
+
       text-align: center;
+
       animation: fadeIn 0.5s ease;
+
     }
+
     .quiz-result.visible { display: block; }
+
     .result-score {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: 4rem;
+
       color: var(--gold);
+
       line-height: 1;
+
       margin: 12px 0;
+
     }
+
     .result-label { font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+
     .result-horas {
+
       font-family: 'Cormorant Garamond', serif;
+
       font-size: 2.2rem;
+
       color: var(--gold-light);
+
       margin: 16px 0 8px;
+
     }
+
     .result-breakdown {
+
       font-size: 11px;
+
       color: var(--text-muted);
+
       line-height: 1.8;
+
       margin-top: 12px;
+
     }
+
     .result-breakdown strong { color: var(--text); }
 
+
+
     /* ── TÍTULO CAPIVARA ── */
+
     .title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
+
     .title-text { flex: 1; min-width: 0; }
+
     .capivara-img {
+
       width: clamp(140px, 22vw, 210px);
+
       height: auto;
+
       object-fit: contain;
+
       flex-shrink: 0;
+
       filter: drop-shadow(0 8px 24px rgba(212,175,85,0.22));
+
       transition: transform 0.4s ease;
+
     }
+
     .capivara-img:hover { transform: scale(1.05) translateY(-5px); }
+
+
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
+
+
     @media (max-width: 560px) {
+
       .form-grid { grid-template-columns: 1fr; }
+
       .field.full { grid-column: 1; }
+
       .form-footer { flex-direction: column; align-items: flex-start; }
+
       .hc-box { padding: 28px 20px; }
+
       .event-date-row { flex-direction: column; align-items: flex-start; gap: 16px; }
+
       .title-row { flex-direction: column-reverse; align-items: center; gap: 16px; }
+
       .title-text { width: 100%; text-align: left; }
+
       .capivara-img { width: clamp(100px, 38vw, 150px); }
+
       .quiz-actions { flex-direction: column; }
+
     }
+
   </style>
+
 </head>
+
 <body>
 
+
+
 <header>
+
   <div class="tag">Inscrições Abertas · 2026-1</div>
+
   <div class="title-row">
+
     <img src="capivaraagente.png" alt="Mascote" class="capivara-img">
+
   </div>
+
     <div class="title-text">
+
       <h1 id="mainTitle">Seminário de Extensão<br><em>3° Período</em></h1>
+
       <p class="subtitle" id="mainSubtitle">Inscrições abertas para todos.</p>
+
       <div class="event-date-row" id="eventDateRow">
+
         <div class="event-date-badge">
+
           <span class="icon">◈</span>
+
           <div>
+
             <div class="date-label">Data do evento</div>
+
             <div class="date-value">2 de Junho de 2026</div>
+
           </div>
+
         </div>
+
         <div class="countdown-wrap" id="countdownWrap"></div>
+
       </div>
+
       <button id="adminBtn">Painel de Controle</button>
+
     </div>
+
   </div>
+
 </header>
+
+
 
 <div class="divider"></div>
 
+
+
 <div class="form-container">
 
+
+
   <!-- ══════════════════════ FORM INSCRIÇÃO ══════════════════════ -->
+
   <form id="inscricaoForm" novalidate>
+
     <div class="form-grid">
+
       <div class="field full" id="field-nome">
+
         <label>Nome completo *</label>
+
         <input type="text" id="nome" placeholder="Seu nome completo">
+
         <span class="error-msg">Informe seu nome completo.</span>
+
       </div>
+
       <div class="field" id="field-matricula">
+
         <label id="label-matricula">Matrícula (Opcional)</label>
+
         <input type="text" id="matricula" placeholder="11 números" maxlength="11">
+
         <span class="error-msg" id="matricula-error-msg">A matrícula deve conter 11 números.</span>
+
       </div>
+
       <div class="field" id="field-email">
+
         <label>E-mail *</label>
+
         <input type="email" id="email" placeholder="seu@email.com">
+
         <span class="error-msg">Informe um e-mail válido.</span>
+
       </div>
+
       <div class="field" id="field-telefone">
+
         <label>Telefone / WhatsApp *</label>
+
         <input type="tel" id="telefone" placeholder="(00) 00000-0000">
+
         <span class="error-msg">Informe um telefone válido.</span>
+
       </div>
+
       <div class="field" id="field-periodo">
+
         <label>Período</label>
+
         <input type="text" id="periodo" placeholder="Ex: 3">
+
       </div>
+
       <div class="field" id="field-vinculo">
+
         <label>Vínculo institucional</label>
+
         <select id="vinculo">
+
           <option value="">Selecione…</option>
+
           <option value="aluno">Aluno</option>
+
           <option value="professor">Professor</option>
+
           <option value="tae">TAE</option>
+
           <option value="visitante_externo">Visitante externo</option>
+
           <option value="egresso">Egresso</option>
+
           <option value="outro">Outro</option>
+
         </select>
+
       </div>
+
       <div class="field full" id="field-curso">
+
         <label>Curso</label>
+
         <select id="curso">
+
           <option value="">Selecione seu curso…</option>
+
           <option value="Administração">Administração</option>
+
           <option value="Ciências Econômicas">Ciências Econômicas</option>
+
           <option value="Ciência da Computação">Ciência da Computação</option>
+
           <option value="Direito">Direito</option>
+
           <option value="Geografia">Geografia</option>
+
           <option value="História">História</option>
+
           <option value="Letras">Letras</option>
+
           <option value="Licenciatura em Educação Especial (EAD)">Licenciatura em Educação Especial (EAD)</option>
+
           <option value="Matemática">Matemática</option>
+
           <option value="Pedagogia">Pedagogia</option>
+
           <option value="Turismo">Turismo</option>
+
           <option value="Outro">Outro</option>
+
         </select>
+
       </div>
+
       <div class="field full" id="outroCursoWrap">
+
         <label>Qual é o seu curso?</label>
+
         <input type="text" id="outroCurso" placeholder="Digite o nome do seu curso">
+
       </div>
+
     </div>
+
     <div class="form-footer">
+
       <p class="privacy-note">Seus dados serão utilizados exclusivamente para organização do evento.</p>
+
       <button type="submit" class="btn-submit" id="btnSubmit">Confirmar inscrição</button>
+
     </div>
+
   </form>
 
+
+
   <!-- ══════════════════════ HORAS COMPLEMENTARES ══════════════════════ -->
+
   <div class="hc-container" id="hcContainer">
+
     <div class="hc-box">
+
       <div class="hc-title">Horas Complementares</div>
+
       <div class="hc-subtitle">
+
         Registre sua presença e opcionalmente responda ao questionário para conquistar horas extras.
+
       </div>
+
+
 
       <!-- TABELA DE HORAS -->
+
       <div class="horas-tabela">
+
         <div class="horas-tabela-title">◈ Como são calculadas as suas horas</div>
+
         <table>
+
           <thead>
+
             <tr>
+
               <th>Critério</th>
+
               <th>Condição</th>
+
               <th style="text-align:right">Horas</th>
+
             </tr>
+
           </thead>
+
           <tbody>
+
             <tr>
+
               <td><span class="badge-presenca">AUTOMÁTICO</span> Inscrição + Presença</td>
+
               <td>Ficar até o final do seminário</td>
+
               <td>5h</td>
+
             </tr>
+
             <tr>
+
               <td><span class="badge-opcional">OPCIONAL</span> Questionário</td>
+
               <td>5 a 9 acertos (41% – 75%)</td>
+
               <td>+5h</td>
+
             </tr>
+
             <tr>
+
               <td><span class="badge-opcional">OPCIONAL</span> Questionário</td>
+
               <td>10 a 11 acertos (83% – 91%)</td>
+
               <td>+10h</td>
+
             </tr>
+
             <tr>
+
               <td><span class="badge-opcional">OPCIONAL</span> Questionário</td>
+
               <td>12 acertos (100%)</td>
+
               <td>+20h</td>
+
             </tr>
+
           </tbody>
+
           <tfoot>
+
             <tr class="total-row">
+
               <td colspan="2"><strong>Máximo possível</strong></td>
+
               <td>25h</td>
+
             </tr>
+
           </tfoot>
+
         </table>
+
       </div>
+
+
 
       <p style="font-size:11px;color:var(--text-muted);margin-bottom:24px;line-height:1.7;">
+
         ℹ️ O questionário é <strong style="color:var(--text)">opcional</strong>. Confirme sua presença abaixo com matrícula ou telefone e, se desejar, responda ao questionário para ganhar horas adicionais.
+
       </p>
 
+
+
       <!-- CONFIRMAR PRESENÇA -->
+
       <div style="margin-bottom:8px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);">
+
         ◈ Confirmar presença
+
       </div>
+
+
 
       <div class="field full" style="margin-bottom:16px;">
+
         <label>Matrícula</label>
+
         <input type="text" id="hcMatricula" maxlength="11" placeholder="Digite sua matrícula (11 números)">
+
       </div>
+
       <div class="or-divider"><span>ou</span></div>
+
       <div class="field full" style="margin-bottom:24px;">
+
         <label>Telefone / WhatsApp</label>
+
         <input type="tel" id="hcTelefone" placeholder="(00) 00000-0000">
+
       </div>
+
+
 
       <button class="btn-submit" id="receberHorasBtn">Confirmar Presença (5h)</button>
+
       <div class="hc-msg" id="hcMsg"></div>
 
-      <!-- ══════════ QUESTIONÁRIO ══════════ -->
-      <div class="quiz-section">
-        <div class="quiz-header">
-          <h3>📋 Questionário Opcional</h3>
-          <p>
-            Responda para conquistar até <strong style="color:var(--gold)">+20 horas adicionais</strong>.
-            Ao finalizar, você verá quais respostas acertou, errou e quantas horas irá receber.
-            O questionário só pode ser respondido <strong style="color:var(--text)">uma vez por participante</strong>.
-          </p>
+
+
+      <!-- PERGUNTA SE QUER RESPONDER O QUIZ -->
+
+      <div id="quizPrompt" style="display:none; margin-top:28px; background:rgba(212,175,85,0.06); border:1px solid rgba(212,175,85,0.25); border-radius:8px; padding:28px; text-align:center; animation: fadeIn 0.5s ease;">
+
+        <div style="font-family:'Cormorant Garamond',serif; font-size:1.6rem; color:var(--gold); margin-bottom:12px;">Deseja ganhar mais horas?</div>
+
+        <p style="font-size:12px; color:var(--text-muted); line-height:1.8; margin-bottom:22px;">
+
+          Você já garantiu suas <strong style="color:var(--text)">5 horas complementares</strong>!<br>
+
+          Quer responder ao questionário opcional e conquistar até <strong style="color:var(--gold)">+20 horas adicionais</strong>?
+
+        </p>
+
+        <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+
+          <button class="btn-submit" id="simQuizBtn">Sim, quero responder</button>
+
+          <button class="btn-secondary" id="naoQuizBtn">Não, apenas as 5h</button>
+
         </div>
+
+      </div>
+
+
+
+      <!-- ══════════ QUESTIONÁRIO ══════════ -->
+
+      <div class="quiz-section" id="quizSection" style="display:none;">
+
+        <div class="quiz-header">
+
+          <h3>📋 Questionário Opcional</h3>
+
+          <p>
+
+            Responda para conquistar até <strong style="color:var(--gold)">+20 horas adicionais</strong>.
+
+            Ao finalizar, você verá quais respostas acertou, errou e quantas horas irá receber.
+
+            O questionário só pode ser respondido <strong style="color:var(--text)">uma vez por participante</strong>.
+
+          </p>
+
+        </div>
+
+
 
         <!-- QUIZ BLOQUEADO -->
+
         <div class="quiz-locked" id="quizLocked">
+
           <div class="lock-icon">🔒</div>
+
           <p>O questionário ainda não foi liberado pelo organizador do evento.<br>Aguarde a liberação durante o seminário.</p>
+
           <div class="quiz-unlock-area">
+
             <input type="password" id="unlockSenha" placeholder="Senha do organizador" />
+
             <button class="btn-unlock" id="unlockBtn">Liberar</button>
+
           </div>
+
           <div class="unlock-msg" id="unlockMsg"></div>
+
         </div>
 
+
+
         <!-- QUIZ DESBLOQUEADO -->
+
         <div class="quiz-body" id="quizBody">
 
-          <!-- IDENTIFICAÇÃO PARA O QUIZ -->
-          <div class="quiz-ident" id="quizIdent">
-            <p>Para registrar seus acertos, informe sua <strong style="color:var(--text)">matrícula ou telefone</strong> cadastrado na inscrição antes de responder.</p>
-            <div class="field full" style="margin-bottom:12px;">
-              <label>Matrícula</label>
-              <input type="text" id="quizMatricula" maxlength="11" placeholder="11 números">
-            </div>
-            <div class="or-divider"><span>ou</span></div>
-            <div class="field full" style="margin-top:12px;">
-              <label>Telefone / WhatsApp</label>
-              <input type="tel" id="quizTelefone" placeholder="(00) 00000-0000">
-            </div>
-          </div>
+
+
+          <!-- SEM IDENTIFICAÇÃO AQUI — já foi feita na etapa anterior -->
+
+
 
           <!-- PERGUNTAS -->
+
           <div class="quiz-form" id="quizForm">
 
+
+
             <!-- Q1 -->
+
             <div class="question-card" data-q="1" data-correct="b">
+
               <div class="question-num">Questão 1 <span class="question-level level-facil">Fácil</span></div>
+
               <div class="question-text">O que define a extensão universitária na atualidade?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q1" value="a"><span class="option-letter">A</span><span>A transmissão unilateral de informações da academia para o público leigo.</span></label>
+
                 <label class="option"><input type="radio" name="q1" value="b"><span class="option-letter">B</span><span>A interação dialógica entre a universidade e a sociedade, articulando ensino e pesquisa.</span></label>
+
                 <label class="option"><input type="radio" name="q1" value="c"><span class="option-letter">C</span><span>O desenvolvimento exclusivo de pesquisas teóricas em ambiente acadêmico fechado.</span></label>
+
                 <label class="option"><input type="radio" name="q1" value="d"><span class="option-letter">D</span><span>A prestação assistencialista de serviços pelo Estado para a sociedade.</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q2 -->
+
             <div class="question-card" data-q="2" data-correct="c">
+
               <div class="question-num">Questão 2 <span class="question-level level-facil">Fácil</span></div>
+
               <div class="question-text">Qual é o percentual mínimo da carga horária total dos cursos de graduação que deve ser destinado às atividades de extensão?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q2" value="a"><span class="option-letter">A</span><span>5%</span></label>
+
                 <label class="option"><input type="radio" name="q2" value="b"><span class="option-letter">B</span><span>15%</span></label>
+
                 <label class="option"><input type="radio" name="q2" value="c"><span class="option-letter">C</span><span>10%</span></label>
+
                 <label class="option"><input type="radio" name="q2" value="d"><span class="option-letter">D</span><span>20%</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q3 -->
+
             <div class="question-card" data-q="3" data-correct="d">
+
               <div class="question-num">Questão 3 <span class="question-level level-facil">Fácil</span></div>
+
               <div class="question-text">No curso de Administração da UFRRJ, qual é a carga horária obrigatória de extensão que o aluno precisa cumprir?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q3" value="a"><span class="option-letter">A</span><span>120h</span></label>
+
                 <label class="option"><input type="radio" name="q3" value="b"><span class="option-letter">B</span><span>200h</span></label>
+
                 <label class="option"><input type="radio" name="q3" value="c"><span class="option-letter">C</span><span>60h</span></label>
+
                 <label class="option"><input type="radio" name="q3" value="d"><span class="option-letter">D</span><span>300h</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q4 -->
+
             <div class="question-card" data-q="4" data-correct="b">
+
               <div class="question-num">Questão 4 <span class="question-level level-facil">Fácil</span></div>
+
               <div class="question-text">Qual dispositivo legal estabeleceu, inicialmente, o princípio da indissociabilidade entre ensino, pesquisa e extensão no Brasil?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q4" value="a"><span class="option-letter">A</span><span>Estatuto das Universidades Brasileiras de 1931</span></label>
+
                 <label class="option"><input type="radio" name="q4" value="b"><span class="option-letter">B</span><span>Constituição Federal de 1988</span></label>
+
                 <label class="option"><input type="radio" name="q4" value="c"><span class="option-letter">C</span><span>Lei de Diretrizes e Bases da Educação de 1961</span></label>
+
                 <label class="option"><input type="radio" name="q4" value="d"><span class="option-letter">D</span><span>Política Nacional de Extensão de 2012</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q5 -->
+
             <div class="question-card" data-q="5" data-correct="a">
+
               <div class="question-num">Questão 5 <span class="question-level level-medio">Médio</span></div>
+
               <div class="question-text">Como a carga horária de extensão está estruturada na matriz curricular do curso de Administração da UFRRJ?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q5" value="a"><span class="option-letter">A</span><span>Um componente de Seminários de Extensão (60h) e dois Percursos Extensionistas (120h cada).</span></label>
+
                 <label class="option"><input type="radio" name="q5" value="b"><span class="option-letter">B</span><span>Dois Seminários de Extensão (150h cada).</span></label>
+
                 <label class="option"><input type="radio" name="q5" value="c"><span class="option-letter">C</span><span>Três Percursos Extensionistas (100h cada).</span></label>
+
                 <label class="option"><input type="radio" name="q5" value="d"><span class="option-letter">D</span><span>Um componente introdutório (100h) e atividades complementares livres (200h).</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q6 -->
+
             <div class="question-card" data-q="6" data-correct="c">
+
               <div class="question-num">Questão 6 <span class="question-level level-medio">Médio</span></div>
+
               <div class="question-text">Na tipologia de ações extensionistas da base teórica da UFRRJ, qual é a principal diferença entre Programa e Projeto?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q6" value="a"><span class="option-letter">A</span><span>O Programa exige financiamento externo; o Projeto utiliza recursos próprios.</span></label>
+
                 <label class="option"><input type="radio" name="q6" value="b"><span class="option-letter">B</span><span>O Programa é voltado apenas para discentes; o Projeto atende servidores técnicos.</span></label>
+
                 <label class="option"><input type="radio" name="q6" value="c"><span class="option-letter">C</span><span>O Programa tem caráter estruturante e de longo prazo; o Projeto tem objetivos específicos e prazos determinados.</span></label>
+
                 <label class="option"><input type="radio" name="q6" value="d"><span class="option-letter">D</span><span>O Programa foca em prestação de serviços; o Projeto foca em difusão cultural.</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q7 -->
+
             <div class="question-card" data-q="7" data-correct="c">
+
               <div class="question-num">Questão 7 <span class="question-level level-medio">Médio</span></div>
+
               <div class="question-text">Quais são as três funções fundamentais da universidade integradas pelo princípio da indissociabilidade?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q7" value="a"><span class="option-letter">A</span><span>Graduação, especialização e mestrado.</span></label>
+
                 <label class="option"><input type="radio" name="q7" value="b"><span class="option-letter">B</span><span>Administração, contabilidade e economia.</span></label>
+
                 <label class="option"><input type="radio" name="q7" value="c"><span class="option-letter">C</span><span>Ensino, pesquisa e extensão.</span></label>
+
                 <label class="option"><input type="radio" name="q7" value="d"><span class="option-letter">D</span><span>Esporte, cultura e lazer.</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q8 -->
+
             <div class="question-card" data-q="8" data-correct="b">
+
               <div class="question-num">Questão 8 <span class="question-level level-medio">Médio</span></div>
+
               <div class="question-text">A extensão universitária busca estabelecer diálogo e reconhecer a interação entre quais tipos de conhecimento?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q8" value="a"><span class="option-letter">A</span><span>O conhecimento exato e o conhecimento biológico.</span></label>
+
                 <label class="option"><input type="radio" name="q8" value="b"><span class="option-letter">B</span><span>O conhecimento acadêmico e o conhecimento popular.</span></label>
+
                 <label class="option"><input type="radio" name="q8" value="c"><span class="option-letter">C</span><span>O conhecimento empírico e o conhecimento tecnológico fechado.</span></label>
+
                 <label class="option"><input type="radio" name="q8" value="d"><span class="option-letter">D</span><span>O conhecimento financeiro e o conhecimento mercadológico.</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q9 -->
+
             <div class="question-card" data-q="9" data-correct="b">
+
               <div class="question-num">Questão 9 <span class="question-level level-dificil">Difícil</span></div>
+
               <div class="question-text">Qual o limite máximo de carga horária em Atividades Acadêmicas Complementares (Autônomas) que pode ser contabilizado e articulado com a extensão no curso?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q9" value="a"><span class="option-letter">A</span><span>60 horas</span></label>
+
                 <label class="option"><input type="radio" name="q9" value="b"><span class="option-letter">B</span><span>100 horas</span></label>
+
                 <label class="option"><input type="radio" name="q9" value="c"><span class="option-letter">C</span><span>120 horas</span></label>
+
                 <label class="option"><input type="radio" name="q9" value="d"><span class="option-letter">D</span><span>150 horas</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q10 -->
+
             <div class="question-card" data-q="10" data-correct="d">
+
               <div class="question-num">Questão 10 <span class="question-level level-dificil">Difícil</span></div>
+
               <div class="question-text">Por que atividades como estágio, iniciação científica e aulas práticas não contabilizam horas de extensão curricular obrigatória?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q10" value="a"><span class="option-letter">A</span><span>Porque são administradas pela Pró-Reitoria de Planejamento (PROPLADI) e não pela PROEXT.</span></label>
+
                 <label class="option"><input type="radio" name="q10" value="b"><span class="option-letter">B</span><span>Porque exigem avaliação teórica ao final do curso, o que fere o estatuto de curricularização.</span></label>
+
                 <label class="option"><input type="radio" name="q10" value="c"><span class="option-letter">C</span><span>Porque não possuem caráter prático e são realizadas apenas no ambiente virtual de ensino.</span></label>
+
                 <label class="option"><input type="radio" name="q10" value="d"><span class="option-letter">D</span><span>Porque não atingem o objetivo central da extensão (a troca dialógica) e por haver impossibilidade de cômputo duplo em componentes curriculares.</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
             <!-- Q11 -->
+
             <div class="question-card" data-q="11" data-correct="a">
+
               <div class="question-num">Questão 11 <span class="question-level level-dificil">Difícil</span></div>
+
               <div class="question-text">De acordo com o marco conceitual e teórico do Projeto Pedagógico do Curso (PPC), como a extensão universitária é definida?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q11" value="a"><span class="option-letter">A</span><span>Um processo interdisciplinar, educativo, cultural, científico e político sob o prisma da interação dialógica entre saber acadêmico e saber popular.</span></label>
+
                 <label class="option"><input type="radio" name="q11" value="b"><span class="option-letter">B</span><span>Uma obrigação curricular de caráter individual que dispensa a atuação de grupos discentes e docentes organizados.</span></label>
+
                 <label class="option"><input type="radio" name="q11" value="c"><span class="option-letter">C</span><span>Um projeto filantrópico cujo único objetivo é o financiamento de pesquisas locais e difusão de tecnologias restritas.</span></label>
+
                 <label class="option"><input type="radio" name="q11" value="d"><span class="option-letter">D</span><span>Uma atividade extracurricular opcional que substitui os créditos obrigatórios de iniciação científica.</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
 
+
+
             <!-- Q12 -->
+
             <div class="question-card" data-q="12" data-correct="c">
+
               <div class="question-num">Questão 12 <span class="question-level level-dificil">Difícil</span></div>
+
               <div class="question-text">O que ocorre caso o aluno não cumpra a carga horária mínima exigida em atividades de extensão na UFRRJ?</div>
+
               <div class="options">
+
                 <label class="option"><input type="radio" name="q12" value="a"><span class="option-letter">A</span><span>A carga horária faltante é convertida em horas de estágio supervisionado.</span></label>
+
                 <label class="option"><input type="radio" name="q12" value="b"><span class="option-letter">B</span><span>O aluno é dispensado do requisito se possuir vínculo empregatício formal.</span></label>
+
                 <label class="option"><input type="radio" name="q12" value="c"><span class="option-letter">C</span><span>O aluno não consegue colar grau e deverá refazer a atividade, pois é um requisito de integralização obrigatório.</span></label>
+
                 <label class="option"><input type="radio" name="q12" value="d"><span class="option-letter">D</span><span>As horas são substituídas automaticamente por disciplinas teóricas optativas.</span></label>
+
               </div>
+
               <div class="question-feedback"></div>
+
             </div>
+
+
 
           </div><!-- /quiz-form -->
 
+
+
           <div class="quiz-actions">
+
             <button class="btn-submit" id="enviarQuizBtn">Enviar Respostas</button>
+
             <span style="font-size:10px;color:var(--text-muted);">Você só pode responder uma vez.</span>
+
           </div>
+
+
 
           <!-- RESULTADO -->
+
           <div class="quiz-result" id="quizResult">
+
             <div class="result-label">Você acertou</div>
+
             <div class="result-score" id="resultScore">0/12</div>
+
             <div style="font-size:11px;color:var(--text-muted);margin-bottom:4px;" id="resultPercent"></div>
+
             <div class="result-horas" id="resultHoras"></div>
+
             <div class="result-label" style="margin-bottom:16px;">horas adicionais pelo questionário</div>
+
             <div class="result-breakdown" id="resultBreakdown"></div>
+
           </div>
 
+
+
         </div><!-- /quiz-body -->
+
       </div><!-- /quiz-section -->
+
     </div><!-- /hc-box -->
+
   </div><!-- /hc-container -->
 
+
+
   <!-- SUCESSO INSCRIÇÃO -->
+
   <div class="success-panel" id="successPanel">
+
     <div class="success-icon">✦</div>
+
     <h2>Inscrição confirmada!</h2>
+
     <p>Sua inscrição foi registrada com sucesso.<br>Fique atento ao seu e-mail para novas informações.</p>
+
   </div>
+
+
 
 </div><!-- /form-container -->
 
+
+
 <footer>© 2026 · Seminário de Extensão — 3° Período</footer>
 
+
+
 <!-- ══════════════════════ SCRIPTS ══════════════════════ -->
+
 <script type="module">
+
   import { getDocs, query, where, updateDoc, doc, collection, getDoc, setDoc }
+
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+
+
   // ── GABARITO ─────────────────────────────────────────────────────────────
+
   const GABARITO = { q1:'b', q2:'c', q3:'d', q4:'b', q5:'a', q6:'c', q7:'c', q8:'b', q9:'b', q10:'d', q11:'a', q12:'c' };
+
   const TOTAL_Q  = 12;
 
+
+
   // ── CALCULAR HORAS EXTRAS PELO QUESTIONÁRIO ───────────────────────────────
+
   function calcHorasExtras(acertos) {
+
     if (acertos === 12) return 20;
+
     if (acertos >= 10) return 10;
+
     if (acertos >= 5)  return 5;
+
     return 0;
+
   }
+
+
 
   // ── CONTAGEM REGRESSIVA ───────────────────────────────────────────────────
+
   function renderCountdown() {
+
     const wrap   = document.getElementById('countdownWrap');
+
     if (!wrap) return;
+
     const target = new Date('2026-06-02T00:00:00');
+
     const diff   = target - new Date();
+
     if (diff <= 0) { wrap.innerHTML = '<span class="countdown-expired">Evento em andamento ✦</span>'; return; }
+
     const pad = n => String(n).padStart(2, '0');
+
     const d = Math.floor(diff / 86400000);
+
     const h = Math.floor((diff % 86400000) / 3600000);
+
     const m = Math.floor((diff % 3600000)  / 60000);
+
     const s = Math.floor((diff % 60000)    / 1000);
+
     wrap.innerHTML = `
+
       <div class="countdown-unit"><span class="countdown-num">${pad(d)}</span><span class="countdown-lbl">dias</span></div>
+
       <span class="countdown-sep">:</span>
+
       <div class="countdown-unit"><span class="countdown-num">${pad(h)}</span><span class="countdown-lbl">horas</span></div>
+
       <span class="countdown-sep">:</span>
+
       <div class="countdown-unit"><span class="countdown-num">${pad(m)}</span><span class="countdown-lbl">min</span></div>
+
       <span class="countdown-sep">:</span>
+
       <div class="countdown-unit"><span class="countdown-num">${pad(s)}</span><span class="countdown-lbl">seg</span></div>`;
+
   }
+
   renderCountdown();
+
   setInterval(renderCountdown, 1000);
 
+
+
   // ── VERIFICAR CONFIGURAÇÕES DO PAINEL (Firebase) ──────────────────────────
+
   async function verificarConfig() {
+
     try {
+
       const configRef  = window.doc(window.db, 'configuracoes', 'painel');
+
       const configSnap = await window.getDoc(configRef);
+
       if (!configSnap.exists()) return; // se não existe, mantém estado atual
+
       const dados = configSnap.data();
 
+
+
       const form        = document.getElementById('inscricaoForm');
+
       const hcContainer = document.getElementById('hcContainer');
+
       const title       = document.getElementById('mainTitle');
+
       const subtitle    = document.getElementById('mainSubtitle');
+
       const dateRow     = document.getElementById('eventDateRow');
+
       const quizLocked  = document.getElementById('quizLocked');
+
       const quizBody    = document.getElementById('quizBody');
 
+
+
       // HORAS LIBERADAS
+
       if (dados.horasLiberadas === true) {
+
         form.style.display = 'none';
+
         if (dateRow) dateRow.style.display = 'none';
+
         hcContainer.classList.add('visible');
+
         title.innerHTML   = 'Horas<br><em>Complementares</em>';
+
         subtitle.innerHTML = 'Confirme sua presença e responda ao questionário opcional para ganhar horas adicionais.';
+
       } else {
+
         form.style.display = 'block';
+
         if (dateRow) dateRow.style.display = '';
+
         hcContainer.classList.remove('visible');
+
         title.innerHTML   = 'Seminário de Extensão<br><em>3° Período</em>';
+
         subtitle.innerHTML = 'Inscrições abertas para todos.';
+
       }
+
+
 
       // QUIZ LIBERADO VIA PAINEL (tem prioridade sobre estado local)
+
       if (dados.quizLiberado === true) {
+
         quizLocked.style.display = 'none';
+
         quizBody.classList.add('visible');
+
       }
+
       // Se quizLiberado for false mas já foi desbloqueado localmente, mantém
+
     } catch (err) { console.error(err); }
+
   }
+
   verificarConfig();
+
   setInterval(verificarConfig, 3000);
 
+
+
   // ── BOTÃO PAINEL ──────────────────────────────────────────────────────────
+
   document.getElementById('adminBtn').addEventListener('click', async () => {
+
     const senha = prompt('Digite a senha do painel:');
+
     if (!senha) return;
+
     try {
+
       const ref  = window.doc(window.db, 'configuracoes', 'painel');
+
       const snap = await window.getDoc(ref);
+
       if (!snap.exists()) { alert('Painel não configurado.'); return; }
+
       if (senha === snap.data().senha) {
+
         sessionStorage.setItem('painelAutorizado', 'true');
+
         window.location.href = 'painel.html';
+
       } else {
+
         alert('Senha incorreta.');
+
       }
+
     } catch (err) { console.error(err); alert('Erro ao validar senha.'); }
+
   });
+
+
 
   // ── BOTÃO LIBERAR QUIZ (INLINE, SEM PAINEL) ───────────────────────────────
+
   document.getElementById('unlockBtn').addEventListener('click', async () => {
+
     const senha   = document.getElementById('unlockSenha').value.trim();
+
     const msg     = document.getElementById('unlockMsg');
+
     const quizLocked = document.getElementById('quizLocked');
+
     const quizBody   = document.getElementById('quizBody');
+
     msg.textContent = '';
+
     if (!senha) { msg.textContent = 'Informe a senha.'; return; }
+
     try {
+
       const ref  = window.doc(window.db, 'configuracoes', 'painel');
+
       const snap = await window.getDoc(ref);
+
       if (!snap.exists()) { msg.textContent = 'Painel não configurado.'; return; }
+
       if (senha === snap.data().senha) {
+
         // Libera o quiz localmente e atualiza o Firebase
+
         await window.updateDoc(ref, { quizLiberado: true });
+
         quizLocked.style.display = 'none';
+
         quizBody.classList.add('visible');
+
       } else {
+
         msg.textContent = 'Senha incorreta.';
+
       }
+
     } catch (err) { console.error(err); msg.textContent = 'Erro ao validar senha.'; }
+
   });
+
+
 
   // ── MÁSCARAS ──────────────────────────────────────────────────────────────
+
   function mascaraTel(input) {
+
     input.addEventListener('input', () => {
+
       let v = input.value.replace(/\D/g,'').slice(0,11);
+
       if      (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3');
+
       else if (v.length >  6) v = v.replace(/^(\d{2})(\d{4})(\d*)$/,  '($1) $2-$3');
+
       else if (v.length >  2) v = v.replace(/^(\d{2})(\d*)$/,          '($1) $2');
+
       input.value = v;
+
     });
+
   }
+
   mascaraTel(document.getElementById('telefone'));
+
   mascaraTel(document.getElementById('hcTelefone'));
-  mascaraTel(document.getElementById('quizTelefone'));
+
+
 
   // ── SELEÇÃO DE CURSO ──────────────────────────────────────────────────────
+
   document.getElementById('curso').addEventListener('change', function() {
+
     const wrap = document.getElementById('outroCursoWrap');
+
     if (this.value === 'Outro') wrap.classList.add('visible');
+
     else wrap.classList.remove('visible');
+
   });
+
+
 
   // ── SELEÇÃO DE OPÇÕES DO QUIZ ─────────────────────────────────────────────
+
   document.querySelectorAll('.question-card').forEach(card => {
+
     card.querySelectorAll('.option').forEach(opt => {
+
       opt.addEventListener('click', () => {
+
         if (opt.classList.contains('disabled')) return;
+
         card.querySelectorAll('.option').forEach(o => { o.classList.remove('selected'); });
+
         opt.classList.add('selected');
+
         opt.querySelector('input[type="radio"]').checked = true;
+
       });
+
     });
+
   });
+
+
 
   // ── VALIDAR FORM ──────────────────────────────────────────────────────────
+
   function validarForm() {
+
     let ok = true;
+
     const nome  = document.getElementById('nome').value.trim();
+
     const email = document.getElementById('email').value.trim();
+
     const tel   = document.getElementById('telefone').value.replace(/\D/g,'');
+
     const mat   = document.getElementById('matricula').value.trim();
 
+
+
     const fNome = document.getElementById('field-nome');
+
     const fEmail= document.getElementById('field-email');
+
     const fTel  = document.getElementById('field-telefone');
+
     const fMat  = document.getElementById('field-matricula');
 
+
+
     fNome.classList.remove('has-error');
+
     fEmail.classList.remove('has-error');
+
     fTel.classList.remove('has-error');
+
     fMat.classList.remove('has-error');
 
+
+
     if (!nome) { fNome.classList.add('has-error'); ok = false; }
+
     if (!email || !email.includes('@')) { fEmail.classList.add('has-error'); ok = false; }
+
     if (tel.length < 10) { fTel.classList.add('has-error'); ok = false; }
+
     if (mat && !/^\d{11}$/.test(mat)) { fMat.classList.add('has-error'); ok = false; }
 
+
+
     return ok;
+
   }
+
+
 
   // ── ENVIAR INSCRIÇÃO ──────────────────────────────────────────────────────
+
   document.getElementById('inscricaoForm').addEventListener('submit', async (e) => {
+
     e.preventDefault();
+
     if (!validarForm()) return;
 
+
+
     const btn = document.getElementById('btnSubmit');
+
     btn.disabled = true;
+
     btn.textContent = 'Registrando…';
 
+
+
     const curso = document.getElementById('curso').value === 'Outro'
+
       ? document.getElementById('outroCurso').value.trim()
+
       : document.getElementById('curso').value;
 
+
+
     const dados = {
+
       nome:                document.getElementById('nome').value.trim(),
+
       matricula:           document.getElementById('matricula').value.trim(),
+
       email:               document.getElementById('email').value.trim(),
+
       telefone:            document.getElementById('telefone').value,
+
       periodo:             document.getElementById('periodo').value.trim(),
+
       vinculo:             document.getElementById('vinculo').value,
+
       curso,
-      horas_complementares: 'NÃO',
+
+      hc_registrado:        'NÃO',
+
+      presenca:             'NÃO',
+
       acertos_questionario: null,
+
       horas_questionario:   0,
+
       inscrito_em:         window.serverTimestamp()
+
     };
 
+
+
     try {
+
       await window.addDoc(window.collection(window.db, 'inscricoes'), dados);
+
       document.getElementById('inscricaoForm').style.display = 'none';
+
       document.getElementById('successPanel').classList.add('visible');
+
     } catch (err) {
+
       console.error(err);
+
       alert('Erro ao registrar inscrição.');
+
       btn.disabled = false;
+
       btn.textContent = 'Confirmar inscrição';
+
     }
+
   });
+
+
 
   // ── HELPER: BUSCAR INSCRITO ───────────────────────────────────────────────
+
   async function buscarInscrito(matriculaVal, telefoneVal) {
+
     let snapshot = { empty: true, docs: [] };
+
     if (matriculaVal) {
+
       const q = query(collection(window.db,'inscricoes'), where('matricula','==',matriculaVal));
+
       snapshot = await getDocs(q);
+
     }
+
     if (snapshot.empty && telefoneVal) {
+
       for (const tel of [telefoneVal,
+
         telefoneVal.replace(/^(\d{2})(\d{5})(\d{4})$/,'($1) $2-$3'),
+
         telefoneVal.replace(/^(\d{2})(\d{4})(\d{4})$/,'($1) $2-$3')]) {
+
         const q = query(collection(window.db,'inscricoes'), where('telefone','==',tel));
+
         const s = await getDocs(q);
+
         if (!s.empty) { snapshot = s; break; }
+
       }
+
     }
+
     return snapshot;
+
   }
 
+
+
+  // ── ESTADO GLOBAL DO USUÁRIO IDENTIFICADO ────────────────────────────────
+
+  let _inscritoDocRef  = null;
+
+  let _inscritoDados   = null;
+
+
+
   // ── CONFIRMAR PRESENÇA (5h) ───────────────────────────────────────────────
+
   document.getElementById('receberHorasBtn').addEventListener('click', async () => {
+
     const mat = document.getElementById('hcMatricula').value.trim();
+
     const tel = document.getElementById('hcTelefone').value.replace(/\D/g,'');
+
     const msg = document.getElementById('hcMsg');
+
     msg.className = 'hc-msg'; msg.innerHTML = '';
+
     if (!mat && !tel) { msg.classList.add('error'); msg.innerHTML = 'Informe sua matrícula ou telefone.'; return; }
+
     if (mat && !/^\d{11}$/.test(mat)) { msg.classList.add('error'); msg.innerHTML = 'Matrícula deve ter 11 dígitos.'; return; }
+
     if (tel && tel.length < 10) { msg.classList.add('error'); msg.innerHTML = 'Telefone inválido.'; return; }
+
     try {
+
       const snapshot = await buscarInscrito(mat, tel);
+
       if (snapshot.empty) { msg.classList.add('error'); msg.innerHTML = 'Cadastro não encontrado. Verifique os dados.'; return; }
-      const docRef = snapshot.docs[0];
-      const dadosDoc  = docRef.data();
-      if (dadosDoc.horas_complementares === 'SIM') {
+
+      const docRef   = snapshot.docs[0];
+
+      const dadosDoc = docRef.data();
+
+
+
+      // Guardar globalmente para uso no quiz
+
+      _inscritoDocRef = docRef;
+
+      _inscritoDados  = dadosDoc;
+
+
+
+      // Se presença já foi registrada
+
+      if (dadosDoc.hc_registrado === 'SIM') {
+
         msg.classList.add('success');
-        msg.innerHTML = `✅ Presença já registrada para <strong>${dadosDoc.nome}</strong>. Horas complementares confirmadas.`;
+
+
+
+        // Verificar se já respondeu o quiz
+
+        const jaRespondeu = dadosDoc.acertos_questionario !== null &&
+
+                            dadosDoc.acertos_questionario !== undefined &&
+
+                            dadosDoc.acertos_questionario !== '';
+
+
+
+        if (jaRespondeu) {
+
+          const horasQuiz = dadosDoc.horas_questionario || 0;
+
+          msg.innerHTML = `✅ <strong>${dadosDoc.nome}</strong>, sua presença já foi registrada (5h) e você já respondeu ao questionário (+${horasQuiz}h). Total: <strong>${5 + horasQuiz}h</strong>.`;
+
+        } else {
+
+          msg.innerHTML = `✅ Presença já registrada para <strong>${dadosDoc.nome}</strong>.`;
+
+          // Desabilitar botão de confirmação e mostrar prompt do quiz
+
+          document.getElementById('receberHorasBtn').disabled = true;
+
+          document.getElementById('receberHorasBtn').textContent = 'Presença já confirmada ✓';
+
+          document.getElementById('quizPrompt').style.display = 'block';
+
+          document.getElementById('quizPrompt').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+        }
+
         return;
+
       }
-      await updateDoc(doc(window.db,'inscricoes', docRef.id), { horas_complementares: 'SIM' });
+
+
+
+      // Registrar presença (5h automáticas) — campo hc_registrado
+
+      await updateDoc(doc(window.db,'inscricoes', docRef.id), { hc_registrado: 'SIM' });
+
+      _inscritoDados = { ...dadosDoc, hc_registrado: 'SIM' };
+
+
+
       msg.classList.add('success');
-      msg.innerHTML = `✅ Presença confirmada com sucesso para <strong>${dadosDoc.nome}</strong>! <strong>5 horas complementares</strong> registradas.`;
+
+      msg.innerHTML = `✅ Presença confirmada para <strong>${dadosDoc.nome}</strong>! <strong>5 horas complementares</strong> registradas.`;
+
+
+
+      // Desabilitar campos e botão de presença
+
+      document.getElementById('hcMatricula').disabled = true;
+
+      document.getElementById('hcTelefone').disabled  = true;
+
+      document.getElementById('receberHorasBtn').disabled = true;
+
+      document.getElementById('receberHorasBtn').textContent = 'Presença confirmada ✓';
+
+
+
+      // Mostrar pergunta sobre o questionário
+
+      document.getElementById('quizPrompt').style.display = 'block';
+
+      document.getElementById('quizPrompt').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+
+
     } catch (err) { console.error(err); msg.classList.add('error'); msg.innerHTML = 'Erro ao registrar. Tente novamente.'; }
+
   });
+
+
+
+  // ── BOTÃO NÃO QUER O QUIZ ─────────────────────────────────────────────────
+
+  document.getElementById('naoQuizBtn').addEventListener('click', () => {
+
+    document.getElementById('quizPrompt').style.display = 'none';
+
+    const msg = document.getElementById('hcMsg');
+
+    msg.className = 'hc-msg success';
+
+    msg.innerHTML = `✅ Tudo certo! Suas <strong>5 horas complementares</strong> foram registradas com sucesso. Obrigado pela participação!`;
+
+    msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  });
+
+
+
+  // ── BOTÃO SIM QUER O QUIZ ─────────────────────────────────────────────────
+
+  document.getElementById('simQuizBtn').addEventListener('click', () => {
+
+    document.getElementById('quizPrompt').style.display = 'none';
+
+    document.getElementById('quizSection').style.display = 'block';
+
+    document.getElementById('quizSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  });
+
+
 
   // ── ENVIAR QUIZ ───────────────────────────────────────────────────────────
+
   document.getElementById('enviarQuizBtn').addEventListener('click', async () => {
-    const mat = document.getElementById('quizMatricula').value.trim();
-    const tel = document.getElementById('quizTelefone').value.replace(/\D/g,'');
+
     const msg = document.getElementById('hcMsg');
+
     msg.className = 'hc-msg'; msg.innerHTML = '';
 
-    if (!mat && !tel) {
+
+
+    // Usar dados do inscrito já identificado na etapa de presença
+
+    if (!_inscritoDocRef || !_inscritoDados) {
+
       msg.classList.add('error');
-      msg.innerHTML = 'ℹ️ Informe sua matrícula ou telefone antes de enviar o questionário.';
-      document.getElementById('quizIdent').scrollIntoView({ behavior: 'smooth' });
+
+      msg.innerHTML = 'Erro: identificação não encontrada. Volte e confirme sua presença primeiro.';
+
       return;
+
     }
+
+
 
     // Verificar se todas as perguntas foram respondidas
+
     const cards = document.querySelectorAll('.question-card');
+
     let todasRespondidas = true;
+
     cards.forEach(card => {
+
       const q = card.dataset.q;
+
       if (!document.querySelector(`input[name="q${q}"]:checked`)) todasRespondidas = false;
+
     });
+
     if (!todasRespondidas) {
+
       msg.classList.add('error');
+
       msg.innerHTML = '⚠️ Responda todas as 12 questões antes de enviar.';
+
       return;
+
     }
 
-    // Buscar inscrito
-    let snapshot;
-    try { snapshot = await buscarInscrito(mat, tel); }
-    catch (err) { console.error(err); msg.classList.add('error'); msg.innerHTML = 'Erro ao verificar cadastro.'; return; }
-    if (snapshot.empty) {
-      msg.classList.add('error');
-      msg.innerHTML = 'Cadastro não encontrado para o questionário. Verifique matrícula ou telefone.';
-      return;
-    }
 
-    const docRef = snapshot.docs[0];
-    const dadosDoc  = docRef.data();
+
+    const docRef   = _inscritoDocRef;
+
+    const dadosDoc = _inscritoDados;
+
+
 
     // Já respondeu?
+
     if (dadosDoc.acertos_questionario !== null && dadosDoc.acertos_questionario !== undefined && dadosDoc.acertos_questionario !== '') {
+
       const prevAcertos = dadosDoc.acertos_questionario;
+
       const prevHoras   = dadosDoc.horas_questionario || 0;
+
       msg.classList.add('success');
+
       msg.innerHTML = `ℹ️ <strong>${dadosDoc.nome}</strong> já respondeu ao questionário anteriormente. Acertos: <strong>${prevAcertos}/12</strong> → <strong>+${prevHoras}h</strong>.`;
+
       return;
+
     }
 
+
+
     // Corrigir respostas
+
     let acertos = 0;
+
     const detalhes = [];
+
     cards.forEach(card => {
+
       const q           = card.dataset.q;
+
       const correta     = card.dataset.correct;
+
       const selecionado = document.querySelector(`input[name="q${q}"]:checked`)?.value || '';
+
       const certo       = selecionado === correta;
+
       if (certo) acertos++;
 
+
+
       // Marcar opções visualmente
+
       card.querySelectorAll('.option').forEach(opt => {
+
         opt.classList.add('disabled');
+
         const val = opt.querySelector('input').value;
+
         if (val === correta)                    opt.classList.add('correct-answer');
+
         if (val === selecionado && !certo)      opt.classList.add('wrong-answer');
+
       });
+
+
 
       // Feedback por questão
+
       const fb = card.querySelector('.question-feedback');
+
       fb.classList.add('show');
+
       if (certo) {
+
         card.classList.add('correct');
+
         fb.classList.add('ok');
+
         fb.innerHTML = `✓ Correto! A resposta é a alternativa <strong>${correta.toUpperCase()}</strong>.`;
+
       } else {
+
         card.classList.add('wrong');
+
         fb.classList.add('err');
+
         fb.innerHTML = `✗ Incorreto. A resposta correta é a alternativa <strong>${correta.toUpperCase()}</strong>. Você marcou <strong>${selecionado.toUpperCase()}</strong>.`;
+
       }
+
       detalhes.push({ q, certo, selecionado, correta });
+
     });
 
+
+
     const horasExtras = calcHorasExtras(acertos);
+
     const percent     = Math.round((acertos / TOTAL_Q) * 100);
+
     const horasTotal  = 5 + horasExtras; // presença + quiz
 
+
+
     // Salvar no Firestore
+
     try {
+
       await updateDoc(doc(window.db,'inscricoes', docRef.id), {
+
         acertos_questionario: acertos,
+
         horas_questionario:   horasExtras
+
       });
+
     } catch (err) { console.error('Erro ao salvar acertos:', err); }
 
+
+
     // Desabilitar botão
+
     document.getElementById('enviarQuizBtn').disabled = true;
+
     document.getElementById('enviarQuizBtn').textContent = 'Questionário enviado ✓';
 
+
+
     // Mostrar resultado
+
     const resultEl    = document.getElementById('quizResult');
+
     const scoreEl     = document.getElementById('resultScore');
+
     const percentEl   = document.getElementById('resultPercent');
+
     const horasEl     = document.getElementById('resultHoras');
+
     const breakdownEl = document.getElementById('resultBreakdown');
 
+
+
     scoreEl.textContent   = `${acertos}/${TOTAL_Q}`;
+
     percentEl.textContent = `${percent}% de aproveitamento`;
+
     horasEl.textContent   = `+${horasExtras}h`;
 
+
+
     let faixa = '';
+
     if (acertos === 12)       faixa = '🏆 Parabéns! Você acertou TODAS as questões!';
+
     else if (acertos >= 10)   faixa = '🥇 Excelente! Você atingiu a faixa de 10–11 acertos.';
+
     else if (acertos >= 5)    faixa = '🥈 Bom! Você atingiu a faixa de 5–9 acertos.';
+
     else                      faixa = `😊 Você acertou ${acertos} questão(ões). Eram necessárias 5 para ganhar horas extras.`;
 
+
+
     const erros = TOTAL_Q - acertos;
+
     breakdownEl.innerHTML = `
+
       <strong>${dadosDoc.nome}</strong>, aqui está seu resultado:<br><br>
+
       ✅ Acertos: <strong>${acertos}</strong> &nbsp;|&nbsp; ❌ Erros: <strong>${erros}</strong><br><br>
+
       ${faixa}<br><br>
+
       <strong>Resumo de horas:</strong><br>
+
       • Presença no seminário: <strong>5h</strong><br>
+
       • Bônus pelo questionário: <strong>+${horasExtras}h</strong><br>
+
       • <strong>Total de horas complementares: ${horasTotal}h</strong><br><br>
+
       <em style="font-size:10px;color:var(--text-muted);">
+
         Tabela de referência: 5–9 acertos = +5h · 10–11 acertos = +10h · 12 acertos = +20h
+
       </em>`;
 
+
+
     resultEl.classList.add('visible');
+
     resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   });
+
 </script>
+
 </body>
+
 </html>
+
