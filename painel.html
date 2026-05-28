@@ -9,8 +9,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
@@ -23,14 +21,13 @@
 
     const app = initializeApp(firebaseConfig);
     const db  = getFirestore(app);
-    const auth = getAuth(app);
-    
     window.db = db;
-    window._fb = { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot };
-    window._auth = { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+   window._fb = { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot };
   </script>
 
+  <!-- SheetJS para Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <!-- jsPDF para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
@@ -52,14 +49,18 @@
     h1{font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:300;color:var(--text);margin-bottom:6px;}
     .subtitle{font-size:11px;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:32px;}
 
+    /* MODO BADGE */
     .modo-badge{display:inline-flex;align-items:center;gap:8px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(212,175,85,0.25);padding:6px 14px;border-radius:4px;margin-bottom:28px;}
     .modo-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);}
 
+    /* STATS ROW */
     .stats-row{display:flex;gap:20px;align-items:stretch;margin-bottom:28px;flex-wrap:wrap;}
     .stat-big{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 28px;min-width:140px;}
     .stat-big .stat-lbl{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
     .stat-big .stat-num{font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold);line-height:1;}
 
+    /* BOTÕES AÇÃO */
+    .action-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex:1;}
     .btn{padding:10px 18px;border-radius:4px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;transition:.2s;border:1px solid transparent;}
     .btn-liberar-horas{background:transparent;color:var(--gold);border-color:rgba(212,175,85,0.4);}
     .btn-liberar-horas:hover{background:rgba(212,175,85,0.08);}
@@ -71,14 +72,21 @@
     .btn-pdf:hover{background:rgba(91,168,212,0.08);}
     .btn-excel{background:transparent;color:#5bd48a;border-color:rgba(91,212,138,0.4);}
     .btn-excel:hover{background:rgba(91,212,138,0.08);}
+    .btn-email{background:transparent;color:#c084fc;border-color:rgba(192,132,252,0.4);}
+    .btn-email:hover{background:rgba(192,132,252,0.08);}
+    .btn-email.enviando{opacity:0.6;cursor:not-allowed;}
     .btn-email-todos{background:transparent;color:#f0c040;border-color:rgba(240,192,64,0.4);}
     .btn-email-todos:hover{background:rgba(240,192,64,0.08);}
+    .btn-email-todos.enviando{opacity:0.6;cursor:not-allowed;}
+    .btn-alterar-senha{background:transparent;color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
+    .btn-alterar-senha:hover{background:rgba(255,255,255,0.04);}
     .btn-voltar{background:transparent;color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
     .btn-voltar:hover{background:rgba(255,255,255,0.04);}
 
     .btn-row-top{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
     .btn-row-bottom{display:flex;gap:10px;flex-wrap:wrap;}
 
+    /* FILTROS */
     .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
     .filter-bar-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-right:4px;}
     .filter-bar input,.filter-bar select{
@@ -92,6 +100,7 @@
 
     .exibindo{font-size:10px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:10px;}
 
+    /* TABELA */
     .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
     table{width:100%;border-collapse:collapse;font-size:11px;min-width:1000px;}
     thead{background:rgba(212,175,85,0.07);}
@@ -107,12 +116,14 @@
     tr:last-child td{border-bottom:none;}
     tr:hover td{background:rgba(255,255,255,0.015);}
 
+    /* BADGES */
     .badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;}
     .badge-sim{background:rgba(143,240,164,0.12);color:var(--success);border:1px solid rgba(143,240,164,0.25);}
     .badge-nao{background:rgba(224,92,92,0.1);color:var(--error);border:1px solid rgba(224,92,92,0.2);}
     .badge-quiz{background:rgba(212,175,85,0.1);color:var(--gold);border:1px solid rgba(212,175,85,0.2);}
     .badge-empty{background:rgba(255,255,255,0.04);color:var(--text-muted);border:1px solid rgba(255,255,255,0.08);}
 
+    /* PRESENÇA SELECT EDITÁVEL */
     .presenca-select{
       background:var(--surface2);border:1px solid var(--border);color:var(--text);
       padding:4px 8px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;
@@ -125,8 +136,26 @@
     .loading{text-align:center;padding:40px;color:var(--text-muted);font-size:11px;letter-spacing:0.1em;}
     .empty{text-align:center;padding:40px;color:var(--text-muted);}
 
+    /* TOAST */
     .toast{position:fixed;bottom:32px;right:32px;background:var(--gold);color:#000;padding:14px 24px;border-radius:6px;font-size:12px;letter-spacing:0.1em;opacity:0;transition:.3s;z-index:999;pointer-events:none;}
     .toast.show{opacity:1;}
+
+    /* MODAL SENHA */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:center;justify-content:center;}
+    .modal-overlay.visible{display:flex;}
+    .modal-box{background:var(--surface);border:1px solid rgba(212,175,85,0.3);border-radius:10px;padding:36px;width:340px;}
+    .modal-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--gold);margin-bottom:20px;}
+    .modal-box input{
+      background:var(--surface2);border:1px solid var(--border);color:var(--text);
+      padding:12px 14px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;
+      width:100%;outline:none;margin-bottom:12px;
+    }
+    .modal-box input:focus{border-color:var(--border-active);}
+    .modal-actions{display:flex;gap:10px;margin-top:8px;}
+    .btn-modal-confirm{background:var(--gold);color:#000;border:none;padding:11px 22px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;}
+    .btn-modal-confirm:hover{background:var(--gold-light);}
+    .btn-modal-cancel{background:transparent;color:var(--text-muted);border:1px solid rgba(255,255,255,0.12);padding:11px 18px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;}
+    .modal-msg{font-size:10px;color:var(--error);margin-top:8px;min-height:16px;}
 
     @media(max-width:640px){
       h1{font-size:2.2rem;}
@@ -136,144 +165,120 @@
 </head>
 <body>
 
-<div id="loginContainer" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; gap: 20px;">
-  <div style="background: var(--surface); border: 1px solid rgba(212,175,85,0.3); border-radius: 8px; padding: 40px; width: 100%; max-width: 360px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
-    <h2 style="font-family:'Cormorant Garamond',serif; font-size: 2.2rem; color: var(--gold); margin-bottom: 8px; text-align: center; font-weight: 300;">Acesso Restrito</h2>
-    <p style="font-size: 10px; color: var(--text-muted); text-align: center; letter-spacing: 0.1em; margin-bottom: 24px; text-transform: uppercase;">Autenticação do Administrador</p>
-    
-    <div style="display: flex; flex-direction: column; gap: 14px;">
-      <input type="email" id="loginEmail" placeholder="E-mail do administrador" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 4px; font-family:'DM Mono',monospace; font-size: 11px; width: 100%; outline: none;">
-      <input type="password" id="loginSenha" placeholder="Senha" style="background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 12px 14px; border-radius: 4px; font-family:'DM Mono',monospace; font-size: 11px; width: 100%; outline: none;">
-      <button id="btnLogin" class="btn" style="background: var(--gold); color: #000; font-weight: bold; width: 100%; padding: 12px; margin-top: 8px;">Entrar no Painel</button>
+<h1>Painel de Controle</h1>
+<p class="subtitle">Lista de inscritos do seminário</p>
+
+<div class="modo-badge" id="modoBadge">
+  <span class="modo-dot"></span>
+  <span id="modoTexto">MODO INSCRIÇÕES ATIVO</span>
+</div>
+
+<!-- STATS + BOTÕES -->
+<div class="stats-row">
+  <div class="stat-big">
+    <div class="stat-lbl">Total de inscritos</div>
+    <div class="stat-num" id="statTotal">0</div>
+  </div>
+  <div style="display:flex;flex-direction:column;justify-content:space-between;gap:10px;flex:1;">
+    <div class="btn-row-top">
+      <button class="btn btn-liberar-horas"       id="btnLiberarHoras">LIBERAR HORAS COMPLEMENTARES</button>
+      <button class="btn btn-liberar-inscricoes"  id="btnLiberarInscricoes">LIBERAR INSCRIÇÕES</button>
+      <button class="btn btn-email-todos"         id="btnEnviarEmailTodos">✉ LEMBRETE — TODOS</button>
+      <button class="btn btn-pdf"                 id="exportPdfTodosBtn">PDF — TODOS</button>
+      <button class="btn btn-pdf"                 id="exportPdfHcBtn">PDF — SOMENTE HC</button>
+      <button class="btn btn-excel"               id="exportExcelTodosBtn">EXCEL — TODOS</button>
+      <button class="btn btn-excel"               id="exportExcelHcBtn">EXCEL — SOMENTE HC</button>
     </div>
-    <div id="loginErro" style="color: var(--error); font-size: 10px; text-align: center; margin-top: 12px; min-height: 16px;"></div>
+    <div class="btn-row-bottom">
+      <button class="btn btn-alterar-senha" id="alterarSenhaBtn">ALTERAR SENHA</button>
+      <button class="btn btn-voltar"        id="voltarBtn">VOLTAR</button>
+    </div>
   </div>
 </div>
 
-<div id="dashboardContainer" style="display: none;">
+<!-- FILTROS -->
+<div class="filter-bar">
+  <span class="filter-bar-label">Buscar nome / e-mail</span>
+  <input type="text" id="searchInput" placeholder="Digite para filtrar…">
 
-  <h1>Painel de Controle</h1>
-  <p class="subtitle">Lista de inscritos do seminário</p>
+  <select id="filterCurso"><option value="">Todos os cursos</option></select>
+  <select id="filterVinculo"><option value="">Todos</option></select>
+  <select id="filterHC">
+    <option value="">Todos</option>
+    <option value="SIM">Com HC</option>
+    <option value="NÃO">Sem HC</option>
+  </select>
 
-  <div class="modo-badge" id="modoBadge">
-    <span class="modo-dot"></span>
-    <span id="modoTexto">MODO INSCRIÇÕES ATIVO</span>
-  </div>
+  <button class="btn-limpar" id="limparFiltrosBtn">LIMPAR FILTROS</button>
+</div>
 
-  <div class="stats-row">
-    <div class="stat-big">
-      <div class="stat-lbl">Total de inscritos</div>
-      <div class="stat-num" id="statTotal">0</div>
+<div class="exibindo" id="exibindoLabel">Exibindo 0 de 0 inscrito(s)</div>
+
+<!-- TABELA -->
+<div class="table-wrap">
+  <table id="mainTable">
+    <thead>
+      <tr>
+        <th data-col="idx">#&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="nome">NOME&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="matricula">MATRÍCULA&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="email">E-MAIL&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="telefone">TELEFONE&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="curso">CURSO&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="periodo">PERÍODO&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="vinculo">VÍNCULO&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="hc" style="text-align:center">HC&nbsp;<span class="sort-arrow">↕</span></th>
+        <th data-col="acertos" style="text-align:center">ACERTOS QUEST.&nbsp;<span class="sort-arrow">↕</span></th>
+        <th style="text-align:center">PRESENÇA</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr><td colspan="11" class="loading">Carregando dados…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- MODAL ALTERAR SENHA -->
+<div class="modal-overlay" id="modalSenha">
+  <div class="modal-box">
+    <div class="modal-title">Alterar Senha</div>
+    <input type="password" id="senhaAtual"   placeholder="Senha atual">
+    <input type="password" id="senhaNova"    placeholder="Nova senha">
+    <input type="password" id="senhaConfirm" placeholder="Confirmar nova senha">
+    <div class="modal-msg" id="modalMsg"></div>
+    <div class="modal-actions">
+      <button class="btn-modal-confirm" id="confirmarSenhaBtn">Salvar</button>
+      <button class="btn-modal-cancel"  id="cancelarSenhaBtn">Cancelar</button>
     </div>
-    <div style="display:flex;flex-direction:column;justify-content:space-between;gap:10px;flex:1;">
-      <div class="btn-row-top">
-        <button class="btn btn-liberar-horas"       id="btnLiberarHoras">LIBERAR HORAS COMPLEMENTARES</button>
-        <button class="btn btn-liberar-inscricoes"  id="btnLiberarInscricoes">LIBERAR INSCRIÇÕES</button>
-        <button class="btn btn-email-todos"         id="btnEnviarEmailTodos">✉ LEMBRETE — TODOS</button>
-        <button class="btn btn-pdf"                 id="exportPdfTodosBtn">PDF — TODOS</button>
-        <button class="btn btn-pdf"                 id="exportPdfHcBtn">PDF — SOMENTE HC</button>
-        <button class="btn btn-excel"               id="exportExcelTodosBtn">EXCEL — TODOS</button>
-        <button class="btn btn-excel"               id="exportExcelHcBtn">EXCEL — SOMENTE HC</button>
-      </div>
-      <div class="btn-row-bottom">
-        <button class="btn btn-voltar"        id="voltarBtn">LOGOUT / SAIR</button>
-      </div>
-    </div>
   </div>
+</div>
 
-  <div class="filter-bar">
-    <span class="filter-bar-label">Buscar nome / e-mail</span>
-    <input type="text" id="searchInput" placeholder="Digite para filtrar…">
-
-    <select id="filterCurso"><option value="">Todos os cursos</option></select>
-    <select id="filterVinculo"><option value="">Todos</option></select>
-    <select id="filterHC">
-      <option value="">Todos</option>
-      <option value="SIM">Com HC</option>
-      <option value="NÃO">Sem HC</option>
-    </select>
-
-    <button class="btn-limpar" id="limparFiltrosBtn">LIMPAR FILTROS</button>
-  </div>
-
-  <div class="exibindo" id="exibindoLabel">Exibindo 0 de 0 inscrito(s)</div>
-
-  <div class="table-wrap">
-    <table id="mainTable">
-      <thead>
-        <tr>
-          <th data-col="idx">#&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="nome">NOME&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="matricula">MATRÍCULA&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="email">E-MAIL&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="telefone">TELEFONE&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="curso">CURSO&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="periodo">PERÍODO&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="vinculo">VÍNCULO&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="hc" style="text-align:center">HC&nbsp;<span class="sort-arrow">↕</span></th>
-          <th data-col="acertos" style="text-align:center">ACERTOS QUEST.&nbsp;<span class="sort-arrow">↕</span></th>
-          <th style="text-align:center">PRESENÇA</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        <tr><td colspan="11" class="loading">Carregando dados…</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="toast" id="toast"></div>
-
-</div> <script type="module">
+<!-- ══════════════════════ SCRIPTS ══════════════════════ -->
+<script type="module">
   const { collection, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot } = window._fb;
-  const { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut } = window._auth;
   const db = window.db;
 
   let todosInscritos = [];
   let sortCol = 'idx';
   let sortAsc = true;
 
-  // Elementos
-  const loginContainer = document.getElementById('loginContainer');
-  const dashboardContainer = document.getElementById('dashboardContainer');
-  const loginErro = document.getElementById('loginErro');
-
-  // ── SESSÃO FIREBASE AUTH ───────────────────────────────────────────────────
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      loginContainer.style.display = 'none';
-      dashboardContainer.style.display = 'block';
-      carregarConfig();
-      carregarInscritos();
-    } else {
-      dashboardContainer.style.display = 'none';
-      loginContainer.style.display = 'flex';
-    }
-  });
-
-  document.getElementById('btnLogin').addEventListener('click', async () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const senha = document.getElementById('loginSenha').value;
-    loginErro.textContent = '';
-    if (!email || !senha) { loginErro.textContent = 'Preencha todos os campos.'; return; }
-    try {
-      await signInWithEmailAndPassword(auth, email, senha);
-    } catch (err) {
-      console.error(err);
-      loginErro.textContent = 'E-mail ou senha incorretos.';
-    }
-  });
+  // ── AUTH ───────────────────────────────────────────────────────────────────
+  if (sessionStorage.getItem('painelAutorizado') !== 'true') {
+    window.location.href = 'seminario-extensao.html';
+  }
 
   // ── TOAST ──────────────────────────────────────────────────────────────────
   function showToast(msg) {
     const t = document.getElementById('toast');
-    if(t) {
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
-    }
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
   }
 
-  // ── CALCULAR HORAS ─────────────────────────────────────────────────────────
+  // ── CALCULAR HORAS QUIZ ────────────────────────────────────────────────────
   function calcHorasQuiz(acertos) {
     const n = parseInt(acertos) || 0;
     if (n === 12) return 20;
@@ -282,17 +287,22 @@
     return 0;
   }
 
+  // ── CALCULAR TOTAL HORAS ───────────────────────────────────────────────────
+  // HC = 5h automáticas (se hc_registrado === 'SIM') + horas do questionário
   function calcTotalHoras(inscrito) {
     const base = inscrito.hc_registrado === 'SIM' ? 5 : 0;
     const quiz = calcHorasQuiz(inscrito.acertos_questionario);
     return base + quiz;
   }
 
-  // ── CONFIGURAÇÕES ──────────────────────────────────────────────────────────
+  // ── CARREGAR CONFIG ────────────────────────────────────────────────────────
   async function carregarConfig() {
     try {
       const ref  = doc(db, 'configuracoes', 'painel');
       const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, { horasLiberadas: false, quizLiberado: false, senha: 'admin123' });
+      }
       const dados = snap.exists() ? snap.data() : { horasLiberadas: false, quizLiberado: false };
       atualizarBtnHoras(!!dados.horasLiberadas);
       atualizarBtnInscricoes(!!dados.horasLiberadas);
@@ -303,7 +313,6 @@
   function atualizarModoBadge(horasLiberadas) {
     const badge = document.getElementById('modoTexto');
     const dot   = document.querySelector('.modo-dot');
-    if (!badge || !dot) return;
     if (horasLiberadas) {
       badge.textContent = 'MODO HORAS COMPLEMENTARES ATIVO';
       dot.style.background = '#8ff0a4';
@@ -317,17 +326,16 @@
 
   function atualizarBtnHoras(ativo) {
     const btn = document.getElementById('btnLiberarHoras');
-    if(!btn) return;
     btn.textContent = ativo ? 'BLOQUEAR HORAS COMPLEMENTARES' : 'LIBERAR HORAS COMPLEMENTARES';
     btn.classList.toggle('ativo', ativo);
   }
 
   function atualizarBtnInscricoes(horasAtivo) {
     const btn = document.getElementById('btnLiberarInscricoes');
-    if(!btn) return;
     btn.textContent = horasAtivo ? 'LIBERAR INSCRIÇÕES' : 'BLOQUEAR INSCRIÇÕES';
   }
 
+  // ── TOGGLE HORAS ──────────────────────────────────────────────────────────
   document.getElementById('btnLiberarHoras').addEventListener('click', async () => {
     try {
       const ref  = doc(db, 'configuracoes', 'painel');
@@ -339,14 +347,16 @@
       atualizarBtnInscricoes(novo);
       atualizarModoBadge(novo);
       showToast(novo ? 'Horas complementares liberadas!' : 'Horas complementares bloqueadas.');
-    } catch (err) { console.error(err); showToast('Erro ao processar alteração.'); }
+    } catch (err) { console.error(err); }
   });
 
+  // ── TOGGLE INSCRIÇÕES ─────────────────────────────────────────────────────
   document.getElementById('btnLiberarInscricoes').addEventListener('click', async () => {
     try {
       const ref  = doc(db, 'configuracoes', 'painel');
       const snap = await getDoc(ref);
       const horasAtivo = snap.exists() ? !!snap.data().horasLiberadas : false;
+      // Botão inverte o estado atual de horas
       const novo = !horasAtivo;
       await setDoc(ref, { horasLiberadas: novo }, { merge: true });
       atualizarBtnHoras(novo);
@@ -356,10 +366,11 @@
     } catch (err) { console.error(err); }
   });
 
-  // ── DADOS EM TEMPO REAL ────────────────────────────────────────────────────
+ // ── CARREGAR INSCRITOS EM TEMPO REAL ──────────────────────────────────────
   function carregarInscritos() {
     try {
       const inscricoesRef = collection(db, 'inscricoes');
+      
       onSnapshot(inscricoesRef, (snap) => {
         todosInscritos = [];
         snap.forEach(d => todosInscritos.push({ id: d.id, ...d.data() }));
@@ -367,16 +378,22 @@
         popularFiltrosCurso();
         popularFiltrosVinculo();
         aplicarFiltros();
+      }, (error) => {
+        console.error("Erro no onSnapshot: ", error);
+        document.getElementById('tableBody').innerHTML =
+          '<tr><td colspan="11" class="empty">Erro ao carregar dados em tempo real.</td></tr>';
       });
+      
     } catch (err) {
       console.error(err);
-      document.getElementById('tableBody').innerHTML = '<tr><td colspan="11" class="empty">Erro no banco.</td></tr>';
+      document.getElementById('tableBody').innerHTML =
+        '<tr><td colspan="11" class="empty">Erro ao configurar o banco de dados.</td></tr>';
     }
   }
 
+  // ── POPULAR FILTROS ────────────────────────────────────────────────────────
   function popularFiltrosCurso() {
     const sel    = document.getElementById('filterCurso');
-    if(!sel) return;
     const atual  = sel.value;
     const cursos = [...new Set(todosInscritos.map(i => i.curso).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">Todos os cursos</option>' +
@@ -385,16 +402,17 @@
 
   function popularFiltrosVinculo() {
     const sel     = document.getElementById('filterVinculo');
-    if(!sel) return;
     const atual   = sel.value;
     const vinculos = [...new Set(todosInscritos.map(i => i.vinculo).filter(Boolean))].sort();
     sel.innerHTML = '<option value="">Todos</option>' +
       vinculos.map(v => `<option value="${v}"${v===atual?' selected':''}>${v}</option>`).join('');
   }
 
+  // ── RENDER TABELA ──────────────────────────────────────────────────────────
   function renderTabela(lista) {
     const tbody = document.getElementById('tableBody');
-    document.getElementById('exibindoLabel').textContent = `Exibindo ${lista.length} de ${todosInscritos.length} inscrito(s)`;
+    document.getElementById('exibindoLabel').textContent =
+      `Exibindo ${lista.length} de ${todosInscritos.length} inscrito(s)`;
 
     if (!lista.length) {
       tbody.innerHTML = '<tr><td colspan="11" class="empty">Nenhum inscrito encontrado.</td></tr>';
@@ -403,17 +421,31 @@
 
     tbody.innerHTML = lista.map((inscrito, idx) => {
       const totalHoras = calcTotalHoras(inscrito);
-      const temAcertos = inscrito.acertos_questionario !== null && inscrito.acertos_questionario !== undefined && inscrito.acertos_questionario !== '';
+      const temAcertos = inscrito.acertos_questionario !== null &&
+                         inscrito.acertos_questionario !== undefined &&
+                         inscrito.acertos_questionario !== '';
       const acertosNum = temAcertos ? parseInt(inscrito.acertos_questionario) || 0 : null;
       const pct        = temAcertos ? Math.round((acertosNum / 12) * 100) : null;
 
-      let hcDisplay = totalHoras > 0 
-        ? `<span style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--gold-light);font-weight:400;">${totalHoras}h</span>`
-        : `<span class="badge badge-empty">0h</span>`;
+      // Horas totais na coluna HC
+      let hcDisplay;
+      if (totalHoras > 0) {
+        hcDisplay = `<span style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--gold-light);font-weight:400;">${totalHoras}h</span>`;
+      } else {
+        hcDisplay = `<span class="badge badge-empty">0h</span>`;
+      }
 
-      let acertosDisplay = temAcertos 
-        ? `<span class="badge badge-quiz" style="font-size:10px;">${acertosNum}/12</span><span style="font-size:9px;color:var(--text-muted);margin-left:4px;">${pct}%</span>`
-        : `<span class="badge badge-empty">—</span>`;
+      // Acertos
+      let acertosDisplay;
+      if (temAcertos) {
+        acertosDisplay = `
+          <span class="badge badge-quiz" style="font-size:10px;">
+            ${acertosNum}/12
+          </span>
+          <span style="font-size:9px;color:var(--text-muted);margin-left:4px;">${pct}%</span>`;
+      } else {
+        acertosDisplay = `<span class="badge badge-empty">—</span>`;
+      }
 
       return `<tr>
         <td style="color:var(--text-muted);font-size:10px;">${idx + 1}</td>
@@ -428,7 +460,8 @@
         <td style="text-align:center;">${acertosDisplay}</td>
         <td style="text-align:center;">
           <select class="presenca-select ${inscrito.presenca === 'SIM' ? 'sim' : 'nao'}"
-                  data-id="${inscrito.id}" onchange="window.atualizarPresenca(this)">
+                  data-id="${inscrito.id}"
+                  onchange="window.atualizarPresenca(this)">
             <option value="SIM" ${inscrito.presenca === 'SIM' ? 'selected' : ''}>SIM</option>
             <option value="NÃO" ${inscrito.presenca !== 'SIM' ? 'selected' : ''}>NÃO</option>
           </select>
@@ -437,6 +470,7 @@
     }).join('');
   }
 
+  // ── ATUALIZAR PRESENÇA (EDITÁVEL) — apenas controle de recepção ──────────
   window.atualizarPresenca = async function(select) {
     const id  = select.dataset.id;
     const val = select.value;
@@ -444,10 +478,14 @@
     select.classList.toggle('nao', val === 'NÃO');
     try {
       await updateDoc(doc(db, 'inscricoes', id), { presenca: val });
+      // Atualizar local
       const inscrito = todosInscritos.find(i => i.id === id);
       if (inscrito) inscrito.presenca = val;
       showToast(`Presença atualizada para ${val}.`);
-    } catch (err) { console.error(err); showToast('Erro ao atualizar presença.'); }
+    } catch (err) {
+      console.error(err);
+      showToast('Erro ao atualizar presença.');
+    }
   };
 
   // ── FILTROS ────────────────────────────────────────────────────────────────
@@ -470,6 +508,7 @@
     if (vinculo) lista = lista.filter(i => i.vinculo === vinculo);
     if (hc)      lista = lista.filter(i => (hc === 'SIM' ? i.hc_registrado === 'SIM' : i.hc_registrado !== 'SIM'));
 
+    // Ordenação
     lista.sort((a, b) => {
       let va, vb;
       if (sortCol === 'idx')      { va = todosInscritos.indexOf(a); vb = todosInscritos.indexOf(b); }
@@ -483,9 +522,11 @@
       if (va > vb) return sortAsc ? 1 : -1;
       return 0;
     });
+
     renderTabela(lista);
   }
 
+  // ── SORT ───────────────────────────────────────────────────────────────────
   document.querySelectorAll('th[data-col]').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.dataset.col;
@@ -504,85 +545,383 @@
   });
 
   document.getElementById('limparFiltrosBtn').addEventListener('click', () => {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('filterCurso').value = '';
+    document.getElementById('searchInput').value   = '';
+    document.getElementById('filterCurso').value   = '';
     document.getElementById('filterVinculo').value = '';
-    document.getElementById('filterHC').value = '';
+    document.getElementById('filterHC').value      = '';
     aplicarFiltros();
   });
 
-  // ── EXPORTS E PDF ──────────────────────────────────────────────────────────
+  // ── HELPER LINHAS EXPORT ──────────────────────────────────────────────────
   function linhasExport(lista) {
     return lista.map((i, idx) => {
       const totalHoras  = calcTotalHoras(i);
-      const temAcertos  = i.acertos_questionario !== null && i.acertos_questionario !== undefined && i.acertos_questionario !== '';
+      const temAcertos  = i.acertos_questionario !== null &&
+                          i.acertos_questionario !== undefined &&
+                          i.acertos_questionario !== '';
       const acertosNum  = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
       const pct         = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '—';
+      const presencaVal = i.presenca === 'SIM' ? 'SIM' : 'NÃO';
       return {
-        '#': idx + 1, 'Nome': i.nome || '', 'Matrícula': i.matricula || '', 'E-mail': i.email || '', 'Telefone': i.telefone || '',
-        'Curso': i.curso || '', 'Período': i.periodo || '', 'Vínculo': i.vinculo || '', 'HC (Total Horas)': `${totalHoras}h`,
-        'Acertos Questionário': temAcertos ? `${acertosNum}/12 (${pct})` : '—', 'Presença': i.presenca === 'SIM' ? 'SIM' : 'NÃO'
+        '#':                    idx + 1,
+        'Nome':                 i.nome       || '',
+        'Matrícula':            i.matricula  || '',
+        'E-mail':               i.email      || '',
+        'Telefone':             i.telefone   || '',
+        'Curso':                i.curso      || '',
+        'Período':              i.periodo    || '',
+        'Vínculo':              i.vinculo    || '',
+        'HC (Total Horas)':     `${totalHoras}h`,
+        'Acertos Questionário': temAcertos ? `${acertosNum}/12 (${pct})` : '—',
+        'Presença':             presencaVal
       };
     });
   }
 
-  function colunasExportPdf() { return ['#','Nome','Matrícula','E-mail','Telefone','Curso','Per.','Vínculo','HC (Horas)','Acertos Quest.','Presença']; }
+  function colunasExportPdf() {
+    return ['#','Nome','Matrícula','E-mail','Telefone','Curso','Per.','Vínculo','HC (Horas)','Acertos Quest.','Presença'];
+  }
 
   function linhasExportPdf(lista) {
     return lista.map((i, idx) => {
       const totalHoras  = calcTotalHoras(i);
-      const temAcertos  = i.acertos_questionario !== null && i.acertos_questionario !== undefined && i.acertos_questionario !== '';
+      const presencaVal = i.presenca === 'SIM' ? 'SIM' : 'NÃO';
+      const temAcertos  = i.acertos_questionario !== null &&
+                          i.acertos_questionario !== undefined &&
+                          i.acertos_questionario !== '';
       const acertosNum  = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
       const pct         = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '';
-      return [idx + 1, i.nome || '', i.matricula || '', i.email || '', i.telefone || '', i.curso || '', i.periodo || '', i.vinculo || '', `${totalHoras}h`, temAcertos ? `${acertosNum}/12 (${pct})` : '—', i.presenca === 'SIM' ? 'SIM' : 'NÃO'];
+      return [
+        idx + 1,
+        i.nome       || '',
+        i.matricula  || '',
+        i.email      || '',
+        i.telefone   || '',
+        i.curso      || '',
+        i.periodo    || '',
+        i.vinculo    || '',
+        `${totalHoras}h`,
+        temAcertos ? `${acertosNum}/12 (${pct})` : '—',
+        presencaVal
+      ];
     });
   }
 
   function gerarPdf(lista, titulo) {
-    const listaOrdenada = [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
+    // 1. Ordenar a lista alfabeticamente pelo nome antes de exportar
+    const listaOrdenada = [...lista].sort((a, b) => 
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+    );
+
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
-    pdf.setFont('helvetica','bold').setFontSize(16).setTextColor(212, 175, 85);
+    
+    // Cabeçalho do Documento
+    pdf.setFont('helvetica','bold');
+    pdf.setFontSize(16);
+    pdf.setTextColor(212, 175, 85);
     pdf.text('Seminário de Extensão — 3° Período', 14, 18);
-    pdf.setFont('helvetica','normal').setFontSize(9).setTextColor(100, 100, 100);
+    pdf.setFont('helvetica','normal');
+    pdf.setFontSize(9);
+    pdf.setTextColor(100, 100, 100); // Texto cinzento escuro para o subtítulo
     pdf.text(`${titulo} · Gerado em: ${new Date().toLocaleString('pt-BR')} · Total: ${listaOrdenada.length} registro(s)`, 14, 26);
 
     pdf.autoTable({
-      head: [colunasExportPdf()], body: linhasExportPdf(listaOrdenada), startY: 32,
-      styles: { fontSize: 7.5, cellPadding: 3, font: 'helvetica' },
-      headStyles: { fillColor: [212, 175, 85], textColor: [255, 255, 255], fontStyle:'bold' },
-      alternateRowStyles: { fillColor: [248, 248, 248] }, bodyStyles: { textColor: [40, 40, 40], fillColor: [255, 255, 255] },
-      columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 44 }, 2: { cellWidth: 26 }, 3: { cellWidth: 48 }, 4: { cellWidth: 30 }, 5: { cellWidth: 38 }, 6: { cellWidth: 10 }, 7: { cellWidth: 20 }, 8: { cellWidth: 18 }, 9: { cellWidth: 26 }, 10: { cellWidth: 16 } }
+      head:       [colunasExportPdf()],
+      body:       linhasExportPdf(listaOrdenada), // Utiliza a lista já ordenada
+      startY:     32,
+      styles:     { fontSize: 7.5, cellPadding: 3, font: 'helvetica' },
+      
+      // 2. Cores claras corrigidas para evitar o fundo preto
+      headStyles: { fillColor: [212, 175, 85], textColor: [255, 255, 255], fontStyle:'bold' }, // Fundo Dourado, Texto Branco
+      alternateRowStyles: { fillColor: [248, 248, 248] }, // Cinzento muito claro para as linhas alternadas
+      bodyStyles: { textColor: [40, 40, 40], fillColor: [255, 255, 255] }, // Texto escuro, fundo branco
+      
+      columnStyles: {
+        0:  { cellWidth: 8 },
+        1:  { cellWidth: 44 },
+        2:  { cellWidth: 26 },
+        3:  { cellWidth: 48 },
+        4:  { cellWidth: 30 },
+        5:  { cellWidth: 38 },
+        6:  { cellWidth: 10 },
+        7:  { cellWidth: 20 },
+        8:  { cellWidth: 18 },
+        9:  { cellWidth: 26 },
+        10: { cellWidth: 16 }
+      }
     });
     pdf.save(`seminario_${titulo.toLowerCase().replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
     showToast('PDF exportado com sucesso!');
   }
 
   function gerarExcel(lista, titulo) {
-    const listaOrdenada = [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
-    const ws  = XLSX.utils.json_to_sheet(linhasExport(listaOrdenada));
+    // 1. Ordenar a lista alfabeticamente pelo nome antes de exportar
+    const listaOrdenada = [...lista].sort((a, b) => 
+      (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' })
+    );
+
+    const ws  = XLSX.utils.json_to_sheet(linhasExport(listaOrdenada)); // Utiliza a lista já ordenada
     const wb  = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Inscrições');
-    ws['!cols'] = [{wch:4},{wch:28},{wch:14},{wch:28},{wch:18},{wch:28},{wch:8},{wch:16},{wch:14},{wch:24},{wch:10}];
-    if (ws['!ref']) ws['!autofilter'] = { ref: ws['!ref'] };
+    
+    // Largura das colunas
+    ws['!cols'] = [
+      {wch:4},{wch:28},{wch:14},{wch:28},{wch:18},{wch:28},{wch:8},{wch:16},
+      {wch:14},{wch:24},{wch:10}
+    ];
+
+    // 3. Adicionar Filtros Automáticos ao Excel
+    if (ws['!ref']) {
+      ws['!autofilter'] = { ref: ws['!ref'] };
+    }
+
     XLSX.writeFile(wb, `seminario_${titulo.toLowerCase().replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
     showToast('Excel exportado com sucesso!');
   }
 
-  document.getElementById('exportPdfTodosBtn').addEventListener('click', () => gerarPdf(todosInscritos, 'Todos'));
-  document.getElementById('exportPdfHcBtn').addEventListener('click', () => gerarPdf(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
-  document.getElementById('exportExcelTodosBtn').addEventListener('click', () => gerarExcel(todosInscritos, 'Todos'));
-  document.getElementById('exportExcelHcBtn').addEventListener('click', () => gerarExcel(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
+  // ── EXPORTAR ──────────────────────────────────────────────────────────────
+  document.getElementById('exportPdfTodosBtn').addEventListener('click',
+    () => gerarPdf(todosInscritos, 'Todos'));
+  document.getElementById('exportPdfHcBtn').addEventListener('click',
+    () => gerarPdf(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
+  document.getElementById('exportExcelTodosBtn').addEventListener('click',
+    () => gerarExcel(todosInscritos, 'Todos'));
+  document.getElementById('exportExcelHcBtn').addEventListener('click',
+    () => gerarExcel(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
 
-  // ── BREVO (DESATIVADO TEMPORARIAMENTE) ─────────────────────────────────────
-  document.getElementById('btnEnviarEmailTodos').addEventListener('click', () => {
-    alert('O envio de e-mails em massa está temporariamente suspenso para proteção das credenciais do servidor.');
+  // ── ALTERAR SENHA ─────────────────────────────────────────────────────────
+  document.getElementById('alterarSenhaBtn').addEventListener('click', () => {
+    document.getElementById('modalSenha').classList.add('visible');
+    document.getElementById('modalMsg').textContent = '';
+    document.getElementById('senhaAtual').value   = '';
+    document.getElementById('senhaNova').value    = '';
+    document.getElementById('senhaConfirm').value = '';
+  });
+  document.getElementById('cancelarSenhaBtn').addEventListener('click', () => {
+    document.getElementById('modalSenha').classList.remove('visible');
+  });
+  document.getElementById('confirmarSenhaBtn').addEventListener('click', async () => {
+    const atual   = document.getElementById('senhaAtual').value;
+    const nova    = document.getElementById('senhaNova').value;
+    const confirm = document.getElementById('senhaConfirm').value;
+    const msgEl   = document.getElementById('modalMsg');
+    msgEl.textContent = '';
+    if (!atual || !nova || !confirm) { msgEl.textContent = 'Preencha todos os campos.'; return; }
+    if (nova !== confirm)            { msgEl.textContent = 'As senhas não coincidem.';   return; }
+    if (nova.length < 4)             { msgEl.textContent = 'Senha deve ter ao menos 4 caracteres.'; return; }
+    try {
+      const ref  = doc(db, 'configuracoes', 'painel');
+      const snap = await getDoc(ref);
+      if (!snap.exists() || snap.data().senha !== atual) { msgEl.textContent = 'Senha atual incorreta.'; return; }
+      await updateDoc(ref, { senha: nova });
+      document.getElementById('modalSenha').classList.remove('visible');
+      showToast('Senha alterada com sucesso!');
+    } catch (err) { console.error(err); msgEl.textContent = 'Erro ao alterar senha.'; }
   });
 
-  // ── SAIR ───────────────────────────────────────────────────────────────────
-  document.getElementById('voltarBtn').addEventListener('click', async () => {
-    try { await signOut(auth); } catch (err) { console.error(err); }
+  // ── BREVO: ENVIAR E-MAIL ──────────────────────────────────────────────────
+
+  const BREVO_KEY = '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';
+
+  async function enviarEmailBrevo({ para, nome, assunto, html }) {
+    const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': BREVO_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sender: { name: 'Seminário de Extensão de Administração - UFRRJ/IM', email: 'israelsa@ufrrj.br' },
+        to: [{ email: para, name: nome }],
+        subject: assunto,
+        htmlContent: html
+      })
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+  }
+
+  function htmlConfirmacaoAntigo({ nome, dataInscricao }) {
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>
+  body{margin:0;padding:0;background:#0d0d0d;font-family:'Georgia',serif;}
+  .wrap{max-width:580px;margin:0 auto;background:#111111;border:1px solid rgba(212,175,85,0.2);}
+  .header{background:linear-gradient(135deg,#0d0d0d 0%,#1a1500 100%);padding:48px 40px 36px;border-bottom:1px solid rgba(212,175,85,0.25);text-align:center;}
+  .tag{display:inline-block;font-size:9px;letter-spacing:0.28em;text-transform:uppercase;color:#d4af55;border:1px solid rgba(212,175,85,0.35);padding:4px 14px;margin-bottom:20px;font-family:monospace;}
+  .title{font-size:2rem;font-weight:300;color:#f0ece4;line-height:1.2;margin:0;}
+  .title em{color:#d4af55;font-style:italic;}
+  .body{padding:40px;}
+  .info-box{background:rgba(212,175,85,0.05);border:1px solid rgba(212,175,85,0.2);border-radius:6px;padding:24px;margin-bottom:24px;}
+  .info-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+  .info-row:last-child{margin-bottom:0;}
+  .info-icon{color:#d4af55;font-size:14px;min-width:20px;margin-top:1px;}
+  .info-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(240,236,228,0.45);font-family:monospace;margin-bottom:3px;}
+  .info-value{font-size:13px;color:#f0ece4;}
+  .alert{background:rgba(212,175,85,0.08);border-left:3px solid #d4af55;padding:14px 18px;font-size:12px;color:rgba(240,236,228,0.8);line-height:1.7;margin-bottom:24px;font-family:monospace;}
+  .footer{background:#0d0d0d;padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);}
+  .footer p{font-size:10px;color:rgba(240,236,228,0.3);letter-spacing:0.1em;margin:0;font-family:monospace;}
+  .check{display:inline-block;background:rgba(143,240,164,0.12);border:1px solid rgba(143,240,164,0.25);color:#8ff0a4;padding:10px 20px;border-radius:4px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:monospace;margin-bottom:24px;}
+</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <div class="tag">Lembrete · Inscrição Confirmada · 2026-1</div>
+    <h1 class="title">Seminário de Extensão<br><em>3° Período</em></h1>
+  </div>
+  <div class="body">
+    <p style="font-size:1.1rem;color:#f0ece4;margin-bottom:16px;font-weight:300;">Olá, <strong style="color:#d4af55;">${nome}</strong>!</p>
+    <div class="check">✦ &nbsp;Você está inscrito(a)</div>
+    <p style="font-size:13px;color:rgba(240,236,228,0.7);line-height:1.8;margin-bottom:24px;">
+      Este é um lembrete de que você se inscreveu no Seminário de Extensão. O evento está chegando — confirme os detalhes abaixo!
+    </p>
+    <div class="info-box">
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Data do evento</div><div class="info-value">2 de Junho de 2026</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Horário</div><div class="info-value">18h30</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Local</div><div class="info-value">Auditório IM — UFRRJ</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Sua inscrição foi realizada em</div><div class="info-value">${dataInscricao}</div></div>
+      </div>
+    </div>
+    <div class="alert">⏱ &nbsp;Chegue <strong>15 minutos antes</strong> do início para registrar sua presença com tranquilidade.</div>
+    <p style="font-size:11px;color:rgba(240,236,228,0.4);line-height:1.8;font-family:monospace;">
+      No dia do evento, você poderá confirmar sua presença e responder ao questionário opcional para conquistar até <strong style="color:#d4af55;">25 horas complementares</strong>.
+    </p>
+  </div>
+  <div class="footer">
+    <p>© 2026 · Seminário de Extensão — 3° Período · UFRRJ/IM</p>
+    <p style="margin-top:6px;">Este e-mail foi enviado para ${nome}. Não responda a esta mensagem.</p>
+  </div>
+</div></body></html>`;
+  }
+
+
+
+  function htmlLembreteDia({ nome }) {
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>
+  body{margin:0;padding:0;background:#0d0d0d;font-family:'Georgia',serif;}
+  .wrap{max-width:580px;margin:0 auto;background:#111111;border:1px solid rgba(212,175,85,0.2);}
+  .header{background:linear-gradient(135deg,#0d0d0d 0%,#1a1500 100%);padding:48px 40px 36px;border-bottom:1px solid rgba(212,175,85,0.25);text-align:center;}
+  .tag{display:inline-block;font-size:9px;letter-spacing:0.28em;text-transform:uppercase;color:#d4af55;border:1px solid rgba(212,175,85,0.35);padding:4px 14px;margin-bottom:20px;font-family:monospace;}
+  .title{font-size:2rem;font-weight:300;color:#f0ece4;line-height:1.2;margin:0;}
+  .title em{color:#d4af55;font-style:italic;}
+  .body{padding:40px;}
+  .destaque{text-align:center;background:rgba(212,175,85,0.07);border:1px solid rgba(212,175,85,0.25);border-radius:8px;padding:32px;margin-bottom:28px;}
+  .destaque-num{font-size:3rem;color:#d4af55;line-height:1;font-weight:300;margin-bottom:8px;}
+  .destaque-label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(240,236,228,0.45);font-family:monospace;}
+  .info-box{background:rgba(212,175,85,0.05);border:1px solid rgba(212,175,85,0.2);border-radius:6px;padding:24px;margin-bottom:24px;}
+  .info-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+  .info-row:last-child{margin-bottom:0;}
+  .info-icon{color:#d4af55;font-size:14px;min-width:20px;margin-top:1px;}
+  .info-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(240,236,228,0.45);font-family:monospace;margin-bottom:3px;}
+  .info-value{font-size:13px;color:#f0ece4;}
+  .alert{background:rgba(212,175,85,0.08);border-left:3px solid #d4af55;padding:14px 18px;font-size:12px;color:rgba(240,236,228,0.8);line-height:1.7;margin-bottom:24px;font-family:monospace;}
+  .footer{background:#0d0d0d;padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);}
+  .footer p{font-size:10px;color:rgba(240,236,228,0.3);letter-spacing:0.1em;margin:0;font-family:monospace;}
+</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <div class="tag">É Hoje · 2 de Junho de 2026</div>
+    <h1 class="title">Seminário de Extensão<br><em>3° Período</em></h1>
+  </div>
+  <div class="body">
+    <p style="font-size:1.1rem;color:#f0ece4;margin-bottom:24px;font-weight:300;">Olá, <strong style="color:#d4af55;">${nome}</strong>!</p>
+    <div class="destaque">
+      <div class="destaque-num">Hoje!</div>
+      <div class="destaque-label">O seminário acontece esta noite</div>
+    </div>
+    <p style="font-size:13px;color:rgba(240,236,228,0.7);line-height:1.8;margin-bottom:24px;">
+      Não esqueça — o Seminário de Extensão é <strong style="color:#f0ece4;">hoje à noite</strong>. Confirme os detalhes abaixo e nos vemos em breve!
+    </p>
+    <div class="info-box">
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Data</div><div class="info-value">2 de Junho de 2026 — Hoje</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Horário</div><div class="info-value">18h30</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Local</div><div class="info-value">Auditório IM — UFRRJ</div></div>
+      </div>
+    </div>
+    <div class="alert">⏱ &nbsp;Chegue <strong>15 minutos antes</strong> — às 18h15 — para registrar sua presença com tranquilidade.</div>
+    <p style="font-size:11px;color:rgba(240,236,228,0.4);line-height:1.8;font-family:monospace;">
+      Lembre-se: no evento você poderá confirmar sua presença e responder ao questionário opcional para conquistar até <strong style="color:#d4af55;">25 horas complementares</strong>.
+    </p>
+  </div>
+  <div class="footer">
+    <p>© 2026 · Seminário de Extensão — 3° Período · UFRRJ/IM</p>
+    <p style="margin-top:6px;">Este e-mail foi enviado para ${nome}. Não responda a esta mensagem.</p>
+  </div>
+</div></body></html>`;
+  }
+
+  // ── LEMBRETE DO DIA — TODOS OS INSCRITOS ─────────────────────────────────
+
+  document.getElementById('btnEnviarEmailTodos').addEventListener('click', async () => {
+    const btn = document.getElementById('btnEnviarEmailTodos');
+    const comEmail = todosInscritos.filter(i => i.email);
+
+    if (comEmail.length === 0) {
+      showToast('Nenhum inscrito com e-mail cadastrado.');
+      return;
+    }
+
+    const confirmar = confirm(`Enviar lembrete "É HOJE" para TODOS os ${comEmail.length} inscritos?\n\nEste botão ignora quem já recebeu e-mail antes — todos receberão novamente.`);
+    if (!confirmar) return;
+
+    btn.disabled = true;
+    btn.classList.add('enviando');
+    btn.textContent = `ENVIANDO 0/${comEmail.length}…`;
+
+    let enviados = 0;
+    let erros = 0;
+
+    for (const inscrito of comEmail) {
+      try {
+        await enviarEmailBrevo({
+          para: inscrito.email,
+          nome: inscrito.nome,
+          assunto: '⏰ É hoje! Seminário de Extensão — 18h30 · Auditório IM',
+          html: htmlLembreteDia({ nome: inscrito.nome })
+        });
+        enviados++;
+        btn.textContent = `ENVIANDO ${enviados}/${comEmail.length}…`;
+        await new Promise(r => setTimeout(r, 300));
+      } catch (err) {
+        console.error(`Erro ao enviar para ${inscrito.email}:`, err);
+        erros++;
+      }
+    }
+
+    btn.disabled = false;
+    btn.classList.remove('enviando');
+    btn.textContent = '✉ LEMBRETE — TODOS';
+
+    const msg = erros > 0
+      ? `${enviados} lembrete(s) enviados. ${erros} erro(s).`
+      : `✓ ${enviados} lembrete(s) enviados com sucesso!`;
+    showToast(msg);
   });
+
+  // ── VOLTAR ─────────────────────────────────────────────────────────────────
+  document.getElementById('voltarBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('painelAutorizado');
+    window.location.href = 'index.html';
+  });
+
+  // ── INIT ───────────────────────────────────────────────────────────────────
+  await carregarConfig();
+  await carregarInscritos();
 </script>
 </body>
 </html>
