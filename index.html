@@ -20,7 +20,7 @@
 
    import { getFirestore, enableIndexedDbPersistence, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
 
@@ -2315,36 +2315,26 @@ enableIndexedDbPersistence(db).catch((err) => {
 
 
 
-  // ── BOTÃO PAINEL ──────────────────────────────────────────────────────────
-
+ // ── BOTÃO PAINEL SEGURO (FIREBASE AUTH) ───────────────────────────────────
   document.getElementById('adminBtn').addEventListener('click', async () => {
-
-    const senha = prompt('Digite a senha do painel:');
-
+    const email = prompt('E-mail do administrador:');
+    if (!email) return;
+    
+    const senha = prompt('Senha de acesso:');
     if (!senha) return;
 
     try {
-
-      const ref  = window.doc(window.db, 'configuracoes', 'painel');
-
-      const snap = await window.getDoc(ref);
-
-      if (!snap.exists()) { alert('Painel não configurado.'); return; }
-
-      if (senha === snap.data().senha) {
-
-        sessionStorage.setItem('painelAutorizado', 'true');
-
-        window.location.href = 'painel.html';
-
-      } else {
-
-        alert('Senha incorreta.');
-
-      }
-
-    } catch (err) { console.error(err); alert('Erro ao validar senha.'); }
-
+      const auth = getAuth();
+      // Valida o usuário e a senha diretamente no cofre do Google
+      await signInWithEmailAndPassword(auth, email, senha);
+      
+      // Se a senha estiver correta, libera o acesso ao painel
+      sessionStorage.setItem('painelAutorizado', 'true');
+      window.location.href = 'painel.html';
+    } catch (err) { 
+      console.error(err); 
+      alert('Acesso negado: E-mail ou senha incorretos.'); 
+    }
   });
 
 
