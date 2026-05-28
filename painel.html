@@ -33,7 +33,7 @@
         // Usuário autenticado — inicializa o painel
         document.getElementById('loginScreen').style.display  = 'none';
         document.getElementById('mainPanel').style.display    = 'block';
-        initPanel(db, auth, user, { collection, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot });
+      window.initPanel(db, auth, user, { collection, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot });
       } else {
         // Não autenticado — mostra tela de login
         document.getElementById('loginScreen').style.display  = 'flex';
