@@ -18,9 +18,11 @@
 
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 
-   import { getFirestore, enableIndexedDbPersistence, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getFirestore, enableIndexedDbPersistence, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut }
+      from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
 
@@ -40,43 +42,124 @@
 
     };
 
+    const app  = initializeApp(firebaseConfig);
+    const db   = getFirestore(app);
+    const auth = getAuth(app);
 
-
-    const app = initializeApp(firebaseConfig);
-
-    const db  = getFirestore(app);
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code == 'failed-precondition') {
-    console.warn("Múltiplas abas abertas, persistência ativada apenas na primeira.");
-  } else if (err.code == 'unimplemented') {
-    console.warn("Navegador não suporta persistência offline.");
-  }
-});
-
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code == 'failed-precondition') {
+        console.warn("Múltiplas abas abertas, persistência ativada apenas na primeira.");
+      } else if (err.code == 'unimplemented') {
+        console.warn("Navegador não suporta persistência offline.");
+      }
+    });
 
     window.db              = db;
+    window.auth            = auth;
+    window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+    window.onAuthStateChanged         = onAuthStateChanged;
+    window.signOut                    = signOut;
 
     window.collection      = collection;
-
     window.addDoc          = addDoc;
-
     window.serverTimestamp = serverTimestamp;
-
     window.doc             = doc;
-
     window.getDoc          = getDoc;
-
     window.updateDoc       = updateDoc;
-
     window.getDocs         = getDocs;
-
     window.query           = query;
-
     window.where           = where;
-
     window.setDoc          = setDoc;
 
+    // ── GUARD: quando horasLiberadas=true, exige login Firebase Auth ──────────
+    // O modal de login e a lógica de exibição do hcContainer ficam aqui
+    // para ter acesso ao auth antes que o resto do JS carregue.
+    window._authReady = new Promise((resolve) => {
+      onAuthStateChanged(auth, (user) => {
+        window._authUser = user || null;
+        resolve(user);
+      });
+    });
+
   </script>
+
+  <!-- Modal de login (oculto por padrão) -->
+  <style>
+    #hcLoginOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(13,13,13,0.92);
+      backdrop-filter: blur(8px);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    #hcLoginOverlay.visible { display: flex; }
+    .hc-login-box {
+      background: #141414;
+      border: 1px solid rgba(212,175,85,0.3);
+      border-radius: 10px;
+      padding: 44px 40px;
+      width: min(420px, 92vw);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      animation: fadeIn 0.35s ease;
+    }
+    .hc-login-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.9rem;
+      font-weight: 300;
+      color: var(--gold);
+      margin-bottom: 4px;
+    }
+    .hc-login-sub {
+      font-size: 11px;
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      line-height: 1.7;
+      margin-bottom: 6px;
+    }
+    .hc-login-label {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .hc-login-box input {
+      background: #1c1c1c;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text);
+      padding: 13px 15px;
+      border-radius: 4px;
+      outline: none;
+      width: 100%;
+      font-family: 'DM Mono', monospace;
+      font-size: 13px;
+      transition: border-color 0.2s;
+    }
+    .hc-login-box input:focus { border-color: rgba(212,175,85,0.6); }
+    #hcLoginErro { font-size: 11px; color: var(--error); min-height: 16px; }
+  </style>
+
+  <div id="hcLoginOverlay">
+    <div class="hc-login-box">
+      <div class="hc-login-title">Acesso Restrito</div>
+      <p class="hc-login-sub">Esta área é exclusiva para o organizador do evento. Faça login com suas credenciais para liberar as horas complementares.</p>
+      <div>
+        <div class="hc-login-label">E-mail</div>
+        <input type="email" id="hcLoginEmail" placeholder="seu@email.com" autocomplete="username">
+      </div>
+      <div>
+        <div class="hc-login-label">Senha</div>
+        <input type="password" id="hcLoginSenha" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="hcLoginErro"></div>
+      <button class="btn-submit" id="hcLoginBtn" style="width:100%;margin-top:4px;">ENTRAR</button>
+    </div>
+  </div>
 
 
 
@@ -2241,11 +2324,9 @@ enableIndexedDbPersistence(db).catch((err) => {
 
       const configSnap = await window.getDoc(configRef);
 
-      if (!configSnap.exists()) return; // se não existe, mantém estado atual
+      if (!configSnap.exists()) return;
 
       const dados = configSnap.data();
-
-
 
       const form        = document.getElementById('inscricaoForm');
 
@@ -2261,40 +2342,43 @@ enableIndexedDbPersistence(db).catch((err) => {
 
       const quizBody    = document.getElementById('quizBody');
 
+      const loginOverlay = document.getElementById('hcLoginOverlay');
 
-
-      // HORAS LIBERADAS
-
+      // HORAS LIBERADAS — exige autenticação Firebase Auth
       if (dados.horasLiberadas === true) {
 
+        // Aguardar o estado de auth estar pronto
+        await window._authReady;
+
+        if (!window._authUser) {
+          // Não autenticado → mostra modal de login; hcContainer fica oculto
+          loginOverlay.classList.add('visible');
+          form.style.display = 'none';
+          if (dateRow) dateRow.style.display = 'none';
+          hcContainer.classList.remove('visible');
+          return;
+        }
+
+        // Autenticado → libera a seção
+        loginOverlay.classList.remove('visible');
         form.style.display = 'none';
-
         if (dateRow) dateRow.style.display = 'none';
-
         hcContainer.classList.add('visible');
-
-        title.innerHTML   = 'Horas<br><em>Complementares</em>';
-
+        title.innerHTML    = 'Horas<br><em>Complementares</em>';
         subtitle.innerHTML = 'Confirme sua presença e responda ao questionário opcional para ganhar horas adicionais.';
 
       } else {
 
+        loginOverlay.classList.remove('visible');
         form.style.display = 'block';
-
         if (dateRow) dateRow.style.display = '';
-
         hcContainer.classList.remove('visible');
-
-        title.innerHTML   = 'Seminário de Extensão<br><em>3° Período</em>';
-
+        title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
         subtitle.innerHTML = 'Inscrições abertas para todos.';
 
       }
 
-
-
-      // QUIZ LIBERADO VIA PAINEL (tem prioridade sobre estado local)
-
+      // QUIZ LIBERADO VIA PAINEL
       if (dados.quizLiberado === true) {
 
         quizLocked.style.display = 'none';
@@ -2302,8 +2386,6 @@ enableIndexedDbPersistence(db).catch((err) => {
         quizBody.classList.add('visible');
 
       }
-
-      // Se quizLiberado for false mas já foi desbloqueado localmente, mantém
 
     } catch (err) { console.error(err); }
 
@@ -2313,37 +2395,64 @@ enableIndexedDbPersistence(db).catch((err) => {
 
   setInterval(verificarConfig, 3000);
 
+  // Quando o estado de auth mudar (login/logout), re-verifica
+  window.onAuthStateChanged(window.auth, (user) => {
+    window._authUser = user || null;
+    verificarConfig();
+  });
 
+  // ── LOGIN NO MODAL DE HORAS COMPLEMENTARES ────────────────────────────────
+
+  document.getElementById('hcLoginBtn').addEventListener('click', async () => {
+    const email = document.getElementById('hcLoginEmail').value.trim();
+    const senha = document.getElementById('hcLoginSenha').value;
+    const errEl = document.getElementById('hcLoginErro');
+    const btn   = document.getElementById('hcLoginBtn');
+
+    errEl.textContent = '';
+    if (!email || !senha) { errEl.textContent = 'Preencha e-mail e senha.'; return; }
+
+    btn.disabled    = true;
+    btn.textContent = 'ENTRANDO…';
+
+    try {
+      await window.signInWithEmailAndPassword(window.auth, email, senha);
+      // onAuthStateChanged dispara verificarConfig automaticamente
+    } catch (err) {
+      let msg = 'Credenciais inválidas.';
+      if (err.code === 'auth/too-many-requests') msg = 'Muitas tentativas. Aguarde alguns minutos.';
+      errEl.textContent = msg;
+      btn.disabled    = false;
+      btn.textContent = 'ENTRAR';
+    }
+  });
+
+  document.getElementById('hcLoginSenha').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('hcLoginBtn').click();
+  });
 
   // ── BOTÃO PAINEL ──────────────────────────────────────────────────────────
 
   document.getElementById('adminBtn').addEventListener('click', async () => {
 
-    const senha = prompt('Digite a senha do painel:');
+    // Se já estiver autenticado, vai direto para o painel
+    await window._authReady;
+    if (window._authUser) {
+      window.location.href = 'painel.html';
+      return;
+    }
 
-    if (!senha) return;
+    // Senão, abre o modal de login — ao autenticar, redireciona
+    const loginOverlay = document.getElementById('hcLoginOverlay');
+    loginOverlay.classList.add('visible');
 
-    try {
-
-      const ref  = window.doc(window.db, 'configuracoes', 'painel');
-
-      const snap = await window.getDoc(ref);
-
-      if (!snap.exists()) { alert('Painel não configurado.'); return; }
-
-      if (senha === snap.data().senha) {
-
-        sessionStorage.setItem('painelAutorizado', 'true');
-
+    // Quando autenticar via modal neste contexto, redireciona ao painel
+    const unsubscribe = window.onAuthStateChanged(window.auth, (user) => {
+      if (user) {
+        unsubscribe();
         window.location.href = 'painel.html';
-
-      } else {
-
-        alert('Senha incorreta.');
-
       }
-
-    } catch (err) { console.error(err); alert('Erro ao validar senha.'); }
+    });
 
   });
 
@@ -3067,4 +3176,3 @@ enableIndexedDbPersistence(db).catch((err) => {
 </body>
 
 </html>
-
