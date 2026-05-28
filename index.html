@@ -2344,42 +2344,33 @@
 
       const loginOverlay = document.getElementById('hcLoginOverlay');
 
-      // HORAS LIBERADAS — exige autenticação Firebase Auth
+     // 1. HORAS LIBERADAS — Público para os alunos!
       if (dados.horasLiberadas === true) {
-
-        // Aguardar o estado de auth estar pronto
-        await window._authReady;
-
-        if (!window._authUser) {
-          // Não autenticado → mostra modal de login; hcContainer fica oculto
-          loginOverlay.classList.add('visible');
-          form.style.display = 'none';
-          if (dateRow) dateRow.style.display = 'none';
-          hcContainer.classList.remove('visible');
-          return;
+        
+        // Só esconde o modal de login se ele não tiver sido aberto pelo seu botão
+        if (loginOverlay.getAttribute('data-manual') !== 'true') {
+          loginOverlay.classList.remove('visible');
         }
-
-        // Autenticado → libera a seção
-        loginOverlay.classList.remove('visible');
+        
         form.style.display = 'none';
         if (dateRow) dateRow.style.display = 'none';
         hcContainer.classList.add('visible');
         title.innerHTML    = 'Horas<br><em>Complementares</em>';
         subtitle.innerHTML = 'Confirme sua presença e responda ao questionário opcional para ganhar horas adicionais.';
 
+      // 2. MODO INSCRIÇÕES — Público
       } else {
 
-            // Só esconde o modal se ele NÃO tiver sido aberto manualmente pelo botão
-            if (loginOverlay.getAttribute('data-manual') !== 'true') {
-              loginOverlay.classList.remove('visible');
-            }
-            form.style.display = 'block';
-            if (dateRow) dateRow.style.display = '';
-            hcContainer.classList.remove('visible');
-            title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
-            subtitle.innerHTML = 'Inscrições abertas para todos.';
-
-          }
+        if (loginOverlay.getAttribute('data-manual') !== 'true') {
+          loginOverlay.classList.remove('visible');
+        }
+        
+        form.style.display = 'block';
+        if (dateRow) dateRow.style.display = '';
+        hcContainer.classList.remove('visible');
+        title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
+        subtitle.innerHTML = 'Inscrições abertas para todos.';
+      }
       // QUIZ LIBERADO VIA PAINEL
       if (dados.quizLiberado === true) {
 
