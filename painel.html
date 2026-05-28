@@ -5,386 +5,32 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Painel de Controle — Seminário</title>
 
- <script type="module">
-  const { collection, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot } = window._fb;
-  const { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut } = window._auth;
-  const db = window.db;
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-  let todosInscritos = [];
-  let sortCol = 'idx';
-  let sortAsc = true;
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
+      authDomain: "projetos-de-extensao.firebaseapp.com",
+      projectId: "projetos-de-extensao",
+      storageBucket: "projetos-de-extensao.firebasestorage.app",
+      messagingSenderId: "42869327067",
+      appId: "1:42869327067:web:84d72c5db659990934b8fe"
+    };
 
-  // elementos de controle de tela
-  const loginContainer = document.getElementById('loginContainer');
-  const dashboardContainer = document.getElementById('dashboardContainer');
-  const loginErro = document.getElementById('loginErro');
+    const app = initializeApp(firebaseConfig);
+    const db  = getFirestore(app);
+    const auth = getAuth(app);
+    
+    window.db = db;
+    window._fb = { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot };
+    window._auth = { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut };
+  </script>
 
-  // ── CONTROLE DE SESSÃO REAL EM TEMPO REAL ──────────────────────────────────
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      // Usuário autenticado com sucesso -> Mostra o painel e carrega os dados
-      loginContainer.style.display = 'none';
-      dashboardContainer.style.display = 'block';
-      carregarConfig();
-      carregarInscritos();
-    } else {
-      // Usuário deslogado -> Esconde o painel e mostra tela de login
-      dashboardContainer.style.display = 'none';
-      loginContainer.style.display = 'flex';
-    }
-  });
-
-  // Ação do Botão de Login
-  document.getElementById('btnLogin').addEventListener('click', async () => {
-    const email = document.getElementById('loginEmail').value.trim();
-    const senha = document.getElementById('loginSenha').value;
-    loginErro.textContent = '';
-
-    if (!email || !senha) { loginErro.textContent = 'Preencha todos os campos.'; return; }
-
-    try {
-      await signInWithEmailAndPassword(auth, email, senha);
-    } catch (err) {
-      console.error(err);
-      loginErro.textContent = 'E-mail ou senha incorretos.';
-    }
-  });
-
-  // ── TOAST ──────────────────────────────────────────────────────────────────
-  function showToast(msg) {
-    const t = document.getElementById('toast');
-    if(t) {
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 3000);
-    }
-  }
-
-  // ── CALCULAR HORAS QUIZ ────────────────────────────────────────────────────
-  function calcHorasQuiz(acertos) {
-    const n = parseInt(acertos) || 0;
-    if (n === 12) return 20;
-    if (n >= 10)  return 10;
-    if (n >= 5)   return 5;
-    return 0;
-  }
-
-  function calcTotalHoras(inscrito) {
-    const base = inscrito.hc_registrado === 'SIM' ? 5 : 0;
-    const quiz = calcHorasQuiz(inscrito.acertos_questionario);
-    return base + quiz;
-  }
-
-  // ── CARREGAR CONFIG ────────────────────────────────────────────────────────
-  async function carregarConfig() {
-    try {
-      const ref  = doc(db, 'configuracoes', 'painel');
-      const snap = await getDoc(ref);
-      const dados = snap.exists() ? snap.data() : { horasLiberadas: false, quizLiberado: false };
-      atualizarBtnHoras(!!dados.horasLiberadas);
-      atualizarBtnInscricoes(!!dados.horasLiberadas);
-      atualizarModoBadge(!!dados.horasLiberadas);
-    } catch (err) { console.error(err); }
-  }
-
-  function atualizarModoBadge(horasLiberadas) {
-    const badge = document.getElementById('modoTexto');
-    const dot   = document.querySelector('.modo-dot');
-    if (!badge || !dot) return;
-    if (horasLiberadas) {
-      badge.textContent = 'MODO HORAS COMPLEMENTARES ATIVO';
-      dot.style.background = '#8ff0a4';
-      dot.style.boxShadow  = '0 0 6px #8ff0a4';
-    } else {
-      badge.textContent = 'MODO INSCRIÇÕES ATIVO';
-      dot.style.background = 'var(--gold)';
-      dot.style.boxShadow  = '0 0 6px var(--gold)';
-    }
-  }
-
-  function atualizarBtnHoras(ativo) {
-    const btn = document.getElementById('btnLiberarHoras');
-    if(!btn) return;
-    btn.textContent = ativo ? 'BLOQUEAR HORAS COMPLEMENTARES' : 'LIBERAR HORAS COMPLEMENTARES';
-    btn.classList.toggle('ativo', ativo);
-  }
-
-  function atualizarBtnInscricoes(horasAtivo) {
-    const btn = document.getElementById('btnLiberarInscricoes');
-    if(!btn) return;
-    btn.textContent = horasAtivo ? 'LIBERAR INSCRIÇÕES' : 'BLOQUEAR INSCRIÇÕES';
-  }
-
-  // ── TOGGLE HORAS ──────────────────────────────────────────────────────────
-  document.getElementById('btnLiberarHoras').addEventListener('click', async () => {
-    try {
-      const ref  = doc(db, 'configuracoes', 'painel');
-      const snap = await getDoc(ref);
-      const atual = snap.exists() ? !!snap.data().horasLiberadas : false;
-      const novo  = !atual;
-      await setDoc(ref, { horasLiberadas: novo }, { merge: true });
-      atualizarBtnHoras(novo);
-      atualizarBtnInscricoes(novo);
-      atualizarModoBadge(novo);
-      showToast(novo ? 'Horas complementares liberadas!' : 'Horas complementares bloqueadas.');
-    } catch (err) { console.error(err); showToast('Erro ao processar alteração.'); }
-  });
-
-  document.getElementById('btnLiberarInscricoes').addEventListener('click', async () => {
-    try {
-      const ref  = doc(db, 'configuracoes', 'painel');
-      const snap = await getDoc(ref);
-      const horasAtivo = snap.exists() ? !!snap.data().horasLiberadas : false;
-      const novo = !horasAtivo;
-      await setDoc(ref, { horasLiberadas: novo }, { merge: true });
-      atualizarBtnHoras(novo);
-      atualizarBtnInscricoes(novo);
-      atualizarModoBadge(novo);
-      showToast(novo ? 'Modo horas ativo — inscrições bloqueadas.' : 'Modo inscrições ativo.');
-    } catch (err) { console.error(err); }
-  });
-
-  // ── CARREGAR INSCRITOS EM TEMPO REAL ──────────────────────────────────────
-  function carregarInscritos() {
-    try {
-      const inscricoesRef = collection(db, 'inscricoes');
-      onSnapshot(inscricoesRef, (snap) => {
-        todosInscritos = [];
-        snap.forEach(d => todosInscritos.push({ id: d.id, ...d.data() }));
-        document.getElementById('statTotal').textContent = todosInscritos.length;
-        popularFiltrosCurso();
-        popularFiltrosVinculo();
-        aplicarFiltros();
-      }, (error) => {
-        console.error("Erro no onSnapshot: ", error);
-        document.getElementById('tableBody').innerHTML =
-          '<tr><td colspan="11" class="empty">Erro ao carregar dados em tempo real.</td></tr>';
-      });
-    } catch (err) {
-      console.error(err);
-      document.getElementById('tableBody').innerHTML =
-        '<tr><td colspan="11" class="empty">Erro ao configurar o banco de dados.</td></tr>';
-    }
-  }
-
-  function popularFiltrosCurso() {
-    const sel    = document.getElementById('filterCurso');
-    if(!sel) return;
-    const atual  = sel.value;
-    const cursos = [...new Set(todosInscritos.map(i => i.curso).filter(Boolean))].sort();
-    sel.innerHTML = '<option value="">Todos os cursos</option>' +
-      cursos.map(c => `<option value="${c}"${c===atual?' selected':''}>${c}</option>`).join('');
-  }
-
-  function popularFiltrosVinculo() {
-    const sel     = document.getElementById('filterVinculo');
-    if(!sel) return;
-    const atual   = sel.value;
-    const vinculos = [...new Set(todosInscritos.map(i => i.vinculo).filter(Boolean))].sort();
-    sel.innerHTML = '<option value="">Todos</option>' +
-      vinculos.map(v => `<option value="${v}"${v===atual?' selected':''}>${v}</option>`).join('');
-  }
-
-  function renderTabela(lista) {
-    const tbody = document.getElementById('tableBody');
-    document.getElementById('exibindoLabel').textContent =
-      `Exibindo ${lista.length} de ${todosInscritos.length} inscrito(s)`;
-
-    if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="11" class="empty">Nenhum inscrito encontrado.</td></tr>';
-      return;
-    }
-
-    tbody.innerHTML = lista.map((inscrito, idx) => {
-      const totalHoras = calcTotalHoras(inscrito);
-      const temAcertos = inscrito.acertos_questionario !== null && inscrito.acertos_questionario !== undefined && inscrito.acertos_questionario !== '';
-      const acertosNum = temAcertos ? parseInt(inscrito.acertos_questionario) || 0 : null;
-      const pct        = temAcertos ? Math.round((acertosNum / 12) * 100) : null;
-
-      let hcDisplay = totalHoras > 0 
-        ? `<span style="font-family:'Cormorant Garamond',serif;font-size:1.15rem;color:var(--gold-light);font-weight:400;">${totalHoras}h</span>`
-        : `<span class="badge badge-empty">0h</span>`;
-
-      let acertosDisplay = temAcertos 
-        ? `<span class="badge badge-quiz" style="font-size:10px;">${acertosNum}/12</span><span style="font-size:9px;color:var(--text-muted);margin-left:4px;">${pct}%</span>`
-        : `<span class="badge badge-empty">—</span>`;
-
-      return `<tr>
-        <td style="color:var(--text-muted);font-size:10px;">${idx + 1}</td>
-        <td><strong style="font-size:11px;">${inscrito.nome || '—'}</strong></td>
-        <td style="color:var(--text-muted);font-size:10px;">${inscrito.matricula || '—'}</td>
-        <td style="color:var(--text-muted);font-size:10px;">${inscrito.email || '—'}</td>
-        <td style="font-size:10px;">${inscrito.telefone || '—'}</td>
-        <td style="font-size:10px;">${inscrito.curso || '—'}</td>
-        <td style="text-align:center;font-size:10px;">${inscrito.periodo || '—'}</td>
-        <td style="font-size:10px;">${inscrito.vinculo || '—'}</td>
-        <td style="text-align:center;">${hcDisplay}</td>
-        <td style="text-align:center;">${acertosDisplay}</td>
-        <td style="text-align:center;">
-          <select class="presenca-select ${inscrito.presenca === 'SIM' ? 'sim' : 'nao'}"
-                  data-id="${inscrito.id}"
-                  onchange="window.atualizarPresenca(this)">
-            <option value="SIM" ${inscrito.presenca === 'SIM' ? 'selected' : ''}>SIM</option>
-            <option value="NÃO" ${inscrito.presenca !== 'SIM' ? 'selected' : ''}>NÃO</option>
-          </select>
-        </td>
-      </tr>`;
-    }).join('');
-  }
-
-  window.atualizarPresenca = async function(select) {
-    const id  = select.dataset.id;
-    const val = select.value;
-    select.classList.toggle('sim', val === 'SIM');
-    select.classList.toggle('nao', val === 'NÃO');
-    try {
-      await updateDoc(doc(db, 'inscricoes', id), { presenca: val });
-      const inscrito = todosInscritos.find(i => i.id === id);
-      if (inscrito) inscrito.presenca = val;
-      showToast(`Presença atualizada para ${val}.`);
-    } catch (err) { console.error(err); showToast('Erro ao atualizar presença.'); }
-  };
-
-  function aplicarFiltros() {
-    const busca   = document.getElementById('searchInput').value.toLowerCase();
-    const curso   = document.getElementById('filterCurso').value;
-    const vinculo = document.getElementById('filterVinculo').value;
-    const hc      = document.getElementById('filterHC').value;
-
-    let lista = [...todosInscritos];
-
-    if (busca) {
-      lista = lista.filter(i =>
-        (i.nome      || '').toLowerCase().includes(busca) ||
-        (i.email     || '').toLowerCase().includes(busca) ||
-        (i.matricula || '').toLowerCase().includes(busca)
-      );
-    }
-    if (curso)   lista = lista.filter(i => i.curso   === curso);
-    if (vinculo) lista = lista.filter(i => i.vinculo === vinculo);
-    if (hc)      lista = lista.filter(i => (hc === 'SIM' ? i.hc_registrado === 'SIM' : i.hc_registrado !== 'SIM'));
-
-    lista.sort((a, b) => {
-      let va, vb;
-      if (sortCol === 'idx')      { va = todosInscritos.indexOf(a); vb = todosInscritos.indexOf(b); }
-      else if (sortCol === 'hc')  { va = calcTotalHoras(a); vb = calcTotalHoras(b); }
-      else if (sortCol === 'acertos') {
-        va = parseInt(a.acertos_questionario) || -1;
-        vb = parseInt(b.acertos_questionario) || -1;
-      }
-      else { va = (a[sortCol] || '').toString().toLowerCase(); vb = (b[sortCol] || '').toString().toLowerCase(); }
-      if (va < vb) return sortAsc ? -1 : 1;
-      if (va > vb) return sortAsc ? 1 : -1;
-      return 0;
-    });
-
-    renderTabela(lista);
-  }
-
-  document.querySelectorAll('th[data-col]').forEach(th => {
-    th.addEventListener('click', () => {
-      const col = th.dataset.col;
-      if (sortCol === col) sortAsc = !sortAsc;
-      else { sortCol = col; sortAsc = true; }
-      document.querySelectorAll('th').forEach(t => t.classList.remove('sorted'));
-      th.classList.add('sorted');
-      th.querySelector('.sort-arrow').textContent = sortAsc ? '↑' : '↓';
-      aplicarFiltros();
-    });
-  });
-
-  ['searchInput','filterCurso','filterVinculo','filterHC'].forEach(id => {
-    document.getElementById(id).addEventListener('input',  aplicarFiltros);
-    document.getElementById(id).addEventListener('change', aplicarFiltros);
-  });
-
-  document.getElementById('limparFiltrosBtn').addEventListener('click', () => {
-    document.getElementById('searchInput').value   = '';
-    document.getElementById('filterCurso').value   = '';
-    document.getElementById('filterVinculo').value = '';
-    document.getElementById('filterHC').value      = '';
-    aplicarFiltros();
-  });
-
-  // Exportações permanecem idênticas
-  function linhasExport(lista) {
-    return lista.map((i, idx) => {
-      const totalHoras  = calcTotalHoras(i);
-      const temAcertos  = i.acertos_questionario !== null && i.acertos_questionario !== undefined && i.acertos_questionario !== '';
-      const acertosNum  = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
-      const pct         = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '—';
-      return {
-        '#': idx + 1, 'Nome': i.nome || '', 'Matrícula': i.matricula || '', 'E-mail': i.email || '', 'Telefone': i.telefone || '',
-        'Curso': i.curso || '', 'Período': i.periodo || '', 'Vínculo': i.vinculo || '', 'HC (Total Horas)': `${totalHoras}h`,
-        'Acertos Questionário': temAcertos ? `${acertosNum}/12 (${pct})` : '—', 'Presença': i.presenca === 'SIM' ? 'SIM' : 'NÃO'
-      };
-    });
-  }
-
-  function colunasExportPdf() { return ['#','Nome','Matrícula','E-mail','Telefone','Curso','Per.','Vínculo','HC (Horas)','Acertos Quest.','Presença']; }
-
-  function linhasExportPdf(lista) {
-    return lista.map((i, idx) => {
-      const totalHoras  = calcTotalHoras(i);
-      const temAcertos  = i.acertos_questionario !== null && i.acertos_questionario !== undefined && i.acertos_questionario !== '';
-      const acertosNum  = temAcertos ? parseInt(i.acertos_questionario) || 0 : null;
-      const pct         = temAcertos ? Math.round((acertosNum / 12) * 100) + '%' : '';
-      return [idx + 1, i.nome || '', i.matricula || '', i.email || '', i.telefone || '', i.curso || '', i.periodo || '', i.vinculo || '', `${totalHoras}h`, temAcertos ? `${acertosNum}/12 (${pct})` : '—', i.presenca === 'SIM' ? 'SIM' : 'NÃO'];
-    });
-  }
-
-  function gerarPdf(lista, titulo) {
-    const listaOrdenada = [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a3' });
-    pdf.setFont('helvetica','bold').setFontSize(16).setTextColor(212, 175, 85);
-    pdf.text('Seminário de Extensão — 3° Período', 14, 18);
-    pdf.setFont('helvetica','normal').setFontSize(9).setTextColor(100, 100, 100);
-    pdf.text(`${titulo} · Gerado em: ${new Date().toLocaleString('pt-BR')} · Total: ${listaOrdenada.length} registro(s)`, 14, 26);
-
-    pdf.autoTable({
-      head: [colunasExportPdf()], body: linhasExportPdf(listaOrdenada), startY: 32,
-      styles: { fontSize: 7.5, cellPadding: 3, font: 'helvetica' },
-      headStyles: { fillColor: [212, 175, 85], textColor: [255, 255, 255], fontStyle:'bold' },
-      alternateRowStyles: { fillColor: [248, 248, 248] }, bodyStyles: { textColor: [40, 40, 40], fillColor: [255, 255, 255] },
-      columnStyles: { 0: { cellWidth: 8 }, 1: { cellWidth: 44 }, 2: { cellWidth: 26 }, 3: { cellWidth: 48 }, 4: { cellWidth: 30 }, 5: { cellWidth: 38 }, 6: { cellWidth: 10 }, 7: { cellWidth: 20 }, 8: { cellWidth: 18 }, 9: { cellWidth: 26 }, 10: { cellWidth: 16 } }
-    });
-    pdf.save(`seminario_${titulo.toLowerCase().replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.pdf`);
-    showToast('PDF exportado com sucesso!');
-  }
-
-  function gerarExcel(lista, titulo) {
-    const listaOrdenada = [...lista].sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR', { sensitivity: 'base' }));
-    const ws  = XLSX.utils.json_to_sheet(linhasExport(listaOrdenada));
-    const wb  = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Inscrições');
-    ws['!cols'] = [{wch:4},{wch:28},{wch:14},{wch:28},{wch:18},{wch:28},{wch:8},{wch:16},{wch:14},{wch:24},{wch:10}];
-    if (ws['!ref']) ws['!autofilter'] = { ref: ws['!ref'] };
-    XLSX.writeFile(wb, `seminario_${titulo.toLowerCase().replace(/\s/g,'_')}_${new Date().toISOString().slice(0,10)}.xlsx`);
-    showToast('Excel exportado com sucesso!');
-  }
-
-  document.getElementById('exportPdfTodosBtn').addEventListener('click', () => gerarPdf(todosInscritos, 'Todos'));
-  document.getElementById('exportPdfHcBtn').addEventListener('click', () => gerarPdf(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
-  document.getElementById('exportExcelTodosBtn').addEventListener('click', () => gerarExcel(todosInscritos, 'Todos'));
-  document.getElementById('exportExcelHcBtn').addEventListener('click', () => gerarExcel(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
-
-  // BREVO: Lembrete (Funções de email desativadas temporariamente por segurança até o passo do Backend)
-  document.getElementById('btnEnviarEmailTodos').addEventListener('click', () => {
-    alert('O envio de e-mails em massa está temporariamente suspenso para proteção das credenciais do servidor.');
-  });
-
-  // ── BOTÃO SAIR (LOGOUT VERDADEIRO) ─────────────────────────────────────────
-  document.getElementById('voltarBtn').addEventListener('click', async () => {
-    try {
-      await signOut(auth);
-    } catch (err) { console.error(err); }
-  });
-</script>
-
-  <!-- SheetJS para Excel -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <!-- jsPDF para PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
@@ -406,18 +52,14 @@
     h1{font-family:'Cormorant Garamond',serif;font-size:3.2rem;font-weight:300;color:var(--text);margin-bottom:6px;}
     .subtitle{font-size:11px;color:var(--text-muted);letter-spacing:0.1em;margin-bottom:32px;}
 
-    /* MODO BADGE */
     .modo-badge{display:inline-flex;align-items:center;gap:8px;font-size:10px;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);border:1px solid rgba(212,175,85,0.25);padding:6px 14px;border-radius:4px;margin-bottom:28px;}
     .modo-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 6px var(--gold);}
 
-    /* STATS ROW */
     .stats-row{display:flex;gap:20px;align-items:stretch;margin-bottom:28px;flex-wrap:wrap;}
     .stat-big{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px 28px;min-width:140px;}
     .stat-big .stat-lbl{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
     .stat-big .stat-num{font-family:'Cormorant Garamond',serif;font-size:3rem;color:var(--gold);line-height:1;}
 
-    /* BOTÕES AÇÃO */
-    .action-btns{display:flex;gap:10px;flex-wrap:wrap;align-items:center;flex:1;}
     .btn{padding:10px 18px;border-radius:4px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;transition:.2s;border:1px solid transparent;}
     .btn-liberar-horas{background:transparent;color:var(--gold);border-color:rgba(212,175,85,0.4);}
     .btn-liberar-horas:hover{background:rgba(212,175,85,0.08);}
@@ -429,21 +71,14 @@
     .btn-pdf:hover{background:rgba(91,168,212,0.08);}
     .btn-excel{background:transparent;color:#5bd48a;border-color:rgba(91,212,138,0.4);}
     .btn-excel:hover{background:rgba(91,212,138,0.08);}
-    .btn-email{background:transparent;color:#c084fc;border-color:rgba(192,132,252,0.4);}
-    .btn-email:hover{background:rgba(192,132,252,0.08);}
-    .btn-email.enviando{opacity:0.6;cursor:not-allowed;}
     .btn-email-todos{background:transparent;color:#f0c040;border-color:rgba(240,192,64,0.4);}
     .btn-email-todos:hover{background:rgba(240,192,64,0.08);}
-    .btn-email-todos.enviando{opacity:0.6;cursor:not-allowed;}
-    .btn-alterar-senha{background:transparent;color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
-    .btn-alterar-senha:hover{background:rgba(255,255,255,0.04);}
     .btn-voltar{background:transparent;color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
     .btn-voltar:hover{background:rgba(255,255,255,0.04);}
 
     .btn-row-top{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
     .btn-row-bottom{display:flex;gap:10px;flex-wrap:wrap;}
 
-    /* FILTROS */
     .filter-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center;}
     .filter-bar-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:var(--text-muted);margin-right:4px;}
     .filter-bar input,.filter-bar select{
@@ -457,7 +92,6 @@
 
     .exibindo{font-size:10px;color:var(--text-muted);letter-spacing:0.08em;margin-bottom:10px;}
 
-    /* TABELA */
     .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px;}
     table{width:100%;border-collapse:collapse;font-size:11px;min-width:1000px;}
     thead{background:rgba(212,175,85,0.07);}
@@ -473,14 +107,12 @@
     tr:last-child td{border-bottom:none;}
     tr:hover td{background:rgba(255,255,255,0.015);}
 
-    /* BADGES */
     .badge{display:inline-block;padding:2px 8px;border-radius:3px;font-size:9px;letter-spacing:0.1em;text-transform:uppercase;}
     .badge-sim{background:rgba(143,240,164,0.12);color:var(--success);border:1px solid rgba(143,240,164,0.25);}
     .badge-nao{background:rgba(224,92,92,0.1);color:var(--error);border:1px solid rgba(224,92,92,0.2);}
     .badge-quiz{background:rgba(212,175,85,0.1);color:var(--gold);border:1px solid rgba(212,175,85,0.2);}
     .badge-empty{background:rgba(255,255,255,0.04);color:var(--text-muted);border:1px solid rgba(255,255,255,0.08);}
 
-    /* PRESENÇA SELECT EDITÁVEL */
     .presenca-select{
       background:var(--surface2);border:1px solid var(--border);color:var(--text);
       padding:4px 8px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;
@@ -493,26 +125,8 @@
     .loading{text-align:center;padding:40px;color:var(--text-muted);font-size:11px;letter-spacing:0.1em;}
     .empty{text-align:center;padding:40px;color:var(--text-muted);}
 
-    /* TOAST */
     .toast{position:fixed;bottom:32px;right:32px;background:var(--gold);color:#000;padding:14px 24px;border-radius:6px;font-size:12px;letter-spacing:0.1em;opacity:0;transition:.3s;z-index:999;pointer-events:none;}
     .toast.show{opacity:1;}
-
-    /* MODAL SENHA */
-    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:500;align-items:center;justify-content:center;}
-    .modal-overlay.visible{display:flex;}
-    .modal-box{background:var(--surface);border:1px solid rgba(212,175,85,0.3);border-radius:10px;padding:36px;width:340px;}
-    .modal-title{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--gold);margin-bottom:20px;}
-    .modal-box input{
-      background:var(--surface2);border:1px solid var(--border);color:var(--text);
-      padding:12px 14px;border-radius:4px;font-family:'DM Mono',monospace;font-size:11px;
-      width:100%;outline:none;margin-bottom:12px;
-    }
-    .modal-box input:focus{border-color:var(--border-active);}
-    .modal-actions{display:flex;gap:10px;margin-top:8px;}
-    .btn-modal-confirm{background:var(--gold);color:#000;border:none;padding:11px 22px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;cursor:pointer;}
-    .btn-modal-confirm:hover{background:var(--gold-light);}
-    .btn-modal-cancel{background:transparent;color:var(--text-muted);border:1px solid rgba(255,255,255,0.12);padding:11px 18px;border-radius:3px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;}
-    .modal-msg{font-size:10px;color:var(--error);margin-top:8px;min-height:16px;}
 
     @media(max-width:640px){
       h1{font-size:2.2rem;}
@@ -609,42 +223,7 @@
 
   <div class="toast" id="toast"></div>
 
-</div> ```
-*(Nota: Removi o modal antigo de alterar senha do HTML, pois agora você gerencia sua senha diretamente pelo painel do Firebase com total segurança).*
-
-#### 2. No script do topo (Primeira tag `<script type="module">`)
-Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de script para incluir o `getAuth` do Firebase:
-
-```javascript
-  script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-    // IMPORTAÇÃO DA AUTENTICAÇÃO
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
-      authDomain: "projetos-de-extensao.firebaseapp.com",
-      projectId: "projetos-de-extensao",
-      storageBucket: "projetos-de-extensao.firebasestorage.app",
-      messagingSenderId: "42869327067",
-      appId: "1:42869327067:web:84d72c5db659990934b8fe"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db  = getFirestore(app);
-    const auth = getAuth(app); // Inicializa a autenticação
-    
-    window.db = db;
-    window._fb = { collection, getDocs, doc, getDoc, updateDoc, setDoc, query, orderBy, onSnapshot };
-    // Disponibiliza as funções de login para o outro script
-    window._auth = { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut };
-  </script>
-  
-<!-- ══════════════════════ SCRIPTS ══════════════════════ -->
-<script type="module">
+</div> <script type="module">
   const { collection, getDocs, doc, getDoc, updateDoc, setDoc, onSnapshot } = window._fb;
   const { auth, signInWithEmailAndPassword, onAuthStateChanged, signOut } = window._auth;
   const db = window.db;
@@ -653,34 +232,29 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
   let sortCol = 'idx';
   let sortAsc = true;
 
-  // Elementos de controle de tela
+  // Elementos
   const loginContainer = document.getElementById('loginContainer');
   const dashboardContainer = document.getElementById('dashboardContainer');
   const loginErro = document.getElementById('loginErro');
 
-  // ── CONTROLE DE SESSÃO REAL EM TEMPO REAL ──────────────────────────────────
+  // ── SESSÃO FIREBASE AUTH ───────────────────────────────────────────────────
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      // Usuário autenticado com sucesso -> Mostra o painel e carrega os dados
       loginContainer.style.display = 'none';
       dashboardContainer.style.display = 'block';
       carregarConfig();
       carregarInscritos();
     } else {
-      // Usuário deslogado -> Esconde o painel e mostra tela de login
       dashboardContainer.style.display = 'none';
       loginContainer.style.display = 'flex';
     }
   });
 
-  // ── AÇÃO DO BOTÃO DE LOGIN ─────────────────────────────────────────────────
   document.getElementById('btnLogin').addEventListener('click', async () => {
     const email = document.getElementById('loginEmail').value.trim();
     const senha = document.getElementById('loginSenha').value;
     loginErro.textContent = '';
-
     if (!email || !senha) { loginErro.textContent = 'Preencha todos os campos.'; return; }
-
     try {
       await signInWithEmailAndPassword(auth, email, senha);
     } catch (err) {
@@ -699,7 +273,7 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
     }
   }
 
-  // ── CALCULAR HORAS QUIZ ────────────────────────────────────────────────────
+  // ── CALCULAR HORAS ─────────────────────────────────────────────────────────
   function calcHorasQuiz(acertos) {
     const n = parseInt(acertos) || 0;
     if (n === 12) return 20;
@@ -714,7 +288,7 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
     return base + quiz;
   }
 
-  // ── CARREGAR CONFIGURAÇÕES ─────────────────────────────────────────────────
+  // ── CONFIGURAÇÕES ──────────────────────────────────────────────────────────
   async function carregarConfig() {
     try {
       const ref  = doc(db, 'configuracoes', 'painel');
@@ -754,7 +328,6 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
     btn.textContent = horasAtivo ? 'LIBERAR INSCRIÇÕES' : 'BLOQUEAR INSCRIÇÕES';
   }
 
-  // ── TOGGLE HORAS E INSCRIÇÕES ──────────────────────────────────────────────
   document.getElementById('btnLiberarHoras').addEventListener('click', async () => {
     try {
       const ref  = doc(db, 'configuracoes', 'painel');
@@ -783,7 +356,7 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
     } catch (err) { console.error(err); }
   });
 
-  // ── CARREGAR INSCRITOS EM TEMPO REAL ───────────────────────────────────────
+  // ── DADOS EM TEMPO REAL ────────────────────────────────────────────────────
   function carregarInscritos() {
     try {
       const inscricoesRef = collection(db, 'inscricoes');
@@ -794,19 +367,13 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
         popularFiltrosCurso();
         popularFiltrosVinculo();
         aplicarFiltros();
-      }, (error) => {
-        console.error("Erro no onSnapshot: ", error);
-        document.getElementById('tableBody').innerHTML =
-          '<tr><td colspan="11" class="empty">Erro ao carregar dados.</td></tr>';
       });
     } catch (err) {
       console.error(err);
-      document.getElementById('tableBody').innerHTML =
-        '<tr><td colspan="11" class="empty">Erro ao configurar o banco de dados.</td></tr>';
+      document.getElementById('tableBody').innerHTML = '<tr><td colspan="11" class="empty">Erro no banco.</td></tr>';
     }
   }
 
-  // ── POPULAR FILTROS E RENDERIZAR TABELA ────────────────────────────────────
   function popularFiltrosCurso() {
     const sel    = document.getElementById('filterCurso');
     if(!sel) return;
@@ -827,8 +394,7 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
 
   function renderTabela(lista) {
     const tbody = document.getElementById('tableBody');
-    document.getElementById('exibindoLabel').textContent =
-      `Exibindo ${lista.length} de ${todosInscritos.length} inscrito(s)`;
+    document.getElementById('exibindoLabel').textContent = `Exibindo ${lista.length} de ${todosInscritos.length} inscrito(s)`;
 
     if (!lista.length) {
       tbody.innerHTML = '<tr><td colspan="11" class="empty">Nenhum inscrito encontrado.</td></tr>';
@@ -862,8 +428,7 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
         <td style="text-align:center;">${acertosDisplay}</td>
         <td style="text-align:center;">
           <select class="presenca-select ${inscrito.presenca === 'SIM' ? 'sim' : 'nao'}"
-                  data-id="${inscrito.id}"
-                  onchange="window.atualizarPresenca(this)">
+                  data-id="${inscrito.id}" onchange="window.atualizarPresenca(this)">
             <option value="SIM" ${inscrito.presenca === 'SIM' ? 'selected' : ''}>SIM</option>
             <option value="NÃO" ${inscrito.presenca !== 'SIM' ? 'selected' : ''}>NÃO</option>
           </select>
@@ -885,7 +450,7 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
     } catch (err) { console.error(err); showToast('Erro ao atualizar presença.'); }
   };
 
-  // ── FILTROS E ORDENAÇÃO ──────────────────────────────────────────────────────
+  // ── FILTROS ────────────────────────────────────────────────────────────────
   function aplicarFiltros() {
     const busca   = document.getElementById('searchInput').value.toLowerCase();
     const curso   = document.getElementById('filterCurso').value;
@@ -918,7 +483,6 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
       if (va > vb) return sortAsc ? 1 : -1;
       return 0;
     });
-
     renderTabela(lista);
   }
 
@@ -940,14 +504,14 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
   });
 
   document.getElementById('limparFiltrosBtn').addEventListener('click', () => {
-    document.getElementById('searchInput').value   = '';
-    document.getElementById('filterCurso').value   = '';
+    document.getElementById('searchInput').value = '';
+    document.getElementById('filterCurso').value = '';
     document.getElementById('filterVinculo').value = '';
-    document.getElementById('filterHC').value      = '';
+    document.getElementById('filterHC').value = '';
     aplicarFiltros();
   });
 
-  // ── EXPORTAÇÃO PDF E EXCEL ───────────────────────────────────────────────────
+  // ── EXPORTS E PDF ──────────────────────────────────────────────────────────
   function linhasExport(lista) {
     return lista.map((i, idx) => {
       const totalHoras  = calcTotalHoras(i);
@@ -1010,17 +574,14 @@ Precisamos importar o módulo de Autenticação. Atualize o primeiro bloco de sc
   document.getElementById('exportExcelTodosBtn').addEventListener('click', () => gerarExcel(todosInscritos, 'Todos'));
   document.getElementById('exportExcelHcBtn').addEventListener('click', () => gerarExcel(todosInscritos.filter(i => i.hc_registrado === 'SIM'), 'Somente HC'));
 
-  // BREVO: Lembrete (Desativado temporariamente por segurança até o backend)
+  // ── BREVO (DESATIVADO TEMPORARIAMENTE) ─────────────────────────────────────
   document.getElementById('btnEnviarEmailTodos').addEventListener('click', () => {
     alert('O envio de e-mails em massa está temporariamente suspenso para proteção das credenciais do servidor.');
   });
 
-  // ── BOTÃO LOGOUT VERDADEIRO ────────────────────────────────────────────────
+  // ── SAIR ───────────────────────────────────────────────────────────────────
   document.getElementById('voltarBtn').addEventListener('click', async () => {
-    try {
-      await signOut(auth);
-      // O onAuthStateChanged vai capturar a saída e mostrar a tela de login automaticamente
-    } catch (err) { console.error(err); }
+    try { await signOut(auth); } catch (err) { console.error(err); }
   });
 </script>
 </body>
