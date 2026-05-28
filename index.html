@@ -2316,6 +2316,9 @@
 
   // ── VERIFICAR CONFIGURAÇÕES DO PAINEL (Firebase) ──────────────────────────
 
+  // Lê o token da URL uma única vez
+  const _urlToken = new URLSearchParams(window.location.search).get('token');
+
   async function verificarConfig() {
 
     try {
@@ -2344,8 +2347,15 @@
 
       const loginOverlay = document.getElementById('hcLoginOverlay');
 
-     // 1. HORAS LIBERADAS — Público para os alunos!
-      if (dados.horasLiberadas === true) {
+      // Valida token: precisa existir na URL, bater com o Firestore e não ter expirado
+      let tokenValido = false;
+      if (_urlToken && dados.qrToken && _urlToken === dados.qrToken) {
+        const agora = Date.now();
+        tokenValido = dados.qrExpiresAt && agora < dados.qrExpiresAt;
+      }
+
+     // 1. HORAS LIBERADAS + TOKEN VÁLIDO — Acesso liberado para o aluno
+      if (dados.horasLiberadas === true && tokenValido) {
         
         // Só esconde o modal de login se ele não tiver sido aberto pelo seu botão
         if (loginOverlay.getAttribute('data-manual') !== 'true') {
@@ -2358,7 +2368,20 @@
         title.innerHTML    = 'Horas<br><em>Complementares</em>';
         subtitle.innerHTML = 'Confirme sua presença e responda ao questionário opcional para ganhar horas adicionais.';
 
-      // 2. MODO INSCRIÇÕES — Público
+      // 2. HORAS LIBERADAS mas sem token válido — mostra aviso
+      } else if (dados.horasLiberadas === true && !tokenValido) {
+
+        if (loginOverlay.getAttribute('data-manual') !== 'true') {
+          loginOverlay.classList.remove('visible');
+        }
+
+        form.style.display = 'none';
+        if (dateRow) dateRow.style.display = 'none';
+        hcContainer.classList.remove('visible');
+        title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
+        subtitle.innerHTML = 'Para acessar as horas complementares, utilize o QR Code exibido no auditório.';
+
+      // 3. MODO INSCRIÇÕES — Público
       } else {
 
         if (loginOverlay.getAttribute('data-manual') !== 'true') {
