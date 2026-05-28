@@ -2663,10 +2663,7 @@
         return; // Interrompe o código aqui, não salva nada!
       }
 
-      // 2. SE NÃO FOR DUPLICADO, SALVA NO BANCO
-
-    try {
-
+      // 2. SE NÃO FOR DUPLICADO, SALVA NO BANCO (Usa addDoc apenas UMA vez)
       await window.addDoc(window.collection(window.db, 'inscricoes'), { ...dados, email_enviado: true });
 
       // Enviar e-mail de confirmação de inscrição
@@ -2681,21 +2678,14 @@
       }
 
       document.getElementById('inscricaoForm').style.display = 'none';
-
       document.getElementById('successPanel').classList.add('visible');
 
     } catch (err) {
-
       console.error(err);
-
       alert('Erro ao registrar inscrição.');
-
       btn.disabled = false;
-
       btn.textContent = 'Confirmar inscrição';
-
     }
-
   });
 
 
