@@ -14,70 +14,49 @@
 
   <!-- FIREBASE -->
 
-  <script type="module">
-
+ <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-
-   import { getFirestore, enableIndexedDbPersistence, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, enableIndexedDbPersistence, collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, getDocs, query, where, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    // Importando a Autenticação no bloco principal
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
     const firebaseConfig = {
-
       apiKey: "AIzaSyA0iyMTBLvtvgb9ndrqOrZWTMH8bDXzqj0",
-
       authDomain: "projetos-de-extensao.firebaseapp.com",
-
       projectId: "projetos-de-extensao",
-
       storageBucket: "projetos-de-extensao.firebasestorage.app",
-
       messagingSenderId: "42869327067",
-
       appId: "1:42869327067:web:84d72c5db659990934b8fe",
-
       measurementId: "G-5YR6YD1Z24"
-
     };
 
-
-
     const app = initializeApp(firebaseConfig);
-
     const db  = getFirestore(app);
-enableIndexedDbPersistence(db).catch((err) => {
-  if (err.code == 'failed-precondition') {
-    console.warn("Múltiplas abas abertas, persistência ativada apenas na primeira.");
-  } else if (err.code == 'unimplemented') {
-    console.warn("Navegador não suporta persistência offline.");
-  }
-});
+    const auth = getAuth(app); // Inicializa e conecta ao app
 
+    enableIndexedDbPersistence(db).catch((err) => {
+      if (err.code == 'failed-precondition') {
+        console.warn("Múltiplas abas abertas, persistência ativada apenas na primeira.");
+      } else if (err.code == 'unimplemented') {
+        console.warn("Navegador não suporta persistência offline.");
+      }
+    });
 
     window.db              = db;
-
     window.collection      = collection;
-
     window.addDoc          = addDoc;
-
     window.serverTimestamp = serverTimestamp;
-
     window.doc             = doc;
-
     window.getDoc          = getDoc;
-
     window.updateDoc       = updateDoc;
-
     window.getDocs         = getDocs;
-
     window.query           = query;
-
     window.where           = where;
-
     window.setDoc          = setDoc;
-
+    
+    // Compartilha o Auth com o script do final da página
+    window._auth = { auth, signInWithEmailAndPassword };
   </script>
-
 
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -2315,25 +2294,75 @@ enableIndexedDbPersistence(db).catch((err) => {
 
 
 
- // ── BOTÃO PAINEL SEGURO (FIREBASE AUTH) ───────────────────────────────────
-  document.getElementById('adminBtn').addEventListener('click', async () => {
-    const email = prompt('E-mail do administrador:');
-    if (!email) return;
-    
-    const senha = prompt('Senha de acesso:');
-    if (!senha) return;
+// ── MODAL DE LOGIN SEGURO (Substitui o alerta padrão) ──────────────────────
+  const { auth, signInWithEmailAndPassword } = window._auth;
+
+  // Cria o visual do Modal dinamicamente mantendo o seu design
+  document.body.insertAdjacentHTML('beforeend', `
+    <style>
+      .modal-overlay-login { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999; align-items:center; justify-content:center; backdrop-filter:blur(4px); }
+      .modal-overlay-login.visible { display:flex; }
+      .modal-box-login { background:var(--surface); border:1px solid rgba(212,175,85,0.3); border-radius:8px; padding:36px; width:90%; max-width:340px; box-shadow:0 10px 30px rgba(0,0,0,0.8); }
+      .modal-box-login h2 { font-family:'Cormorant Garamond',serif; font-size:2.2rem; color:var(--gold); margin-bottom:4px; font-weight:300; text-align:center; }
+      .modal-box-login p { font-size:9px; color:var(--text-muted); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:24px; text-align:center; }
+      .modal-box-login input { background:var(--surface2); border:1px solid var(--border); color:var(--text); padding:12px 14px; border-radius:4px; font-family:'DM Mono',monospace; font-size:11px; width:100%; outline:none; margin-bottom:12px; }
+      .modal-box-login input:focus { border-color:var(--border-active); }
+      .modal-actions-login { display:flex; gap:10px; margin-top:8px; }
+      .btn-modal-confirm { background:var(--gold); color:#000; border:none; padding:12px; border-radius:3px; font-family:'DM Mono',monospace; font-size:10px; font-weight:bold; letter-spacing:0.15em; text-transform:uppercase; cursor:pointer; flex:1; transition:0.2s; }
+      .btn-modal-confirm:hover { background:var(--gold-light); }
+      .btn-modal-cancel { background:transparent; color:var(--text-muted); border:1px solid rgba(255,255,255,0.12); padding:12px 18px; border-radius:3px; font-family:'DM Mono',monospace; font-size:10px; cursor:pointer; transition:0.2s; }
+      .btn-modal-cancel:hover { background:rgba(255,255,255,0.05); }
+    </style>
+    <div class="modal-overlay-login" id="modalLoginAdmin">
+      <div class="modal-box-login">
+        <h2>Acesso Restrito</h2>
+        <p>Autenticação do Administrador</p>
+        <input type="email" id="adminEmailInput" placeholder="E-mail">
+        <input type="password" id="adminSenhaInput" placeholder="Senha">
+        <div id="loginAdminMsg" style="color:var(--error); font-size:10px; margin:4px 0 12px; min-height:14px; text-align:center;"></div>
+        <div class="modal-actions-login">
+          <button class="btn-modal-confirm" id="btnConfirmarLogin">Entrar</button>
+          <button class="btn-modal-cancel" id="btnCancelarLogin">Cancelar</button>
+        </div>
+      </div>
+    </div>
+  `);
+
+  const modalLogin = document.getElementById('modalLoginAdmin');
+  const msgLogin = document.getElementById('loginAdminMsg');
+
+  // Remove os eventos antigos do botão e aciona o novo modal
+  const adminBtn = document.getElementById('adminBtn');
+  const novoAdminBtn = adminBtn.cloneNode(true);
+  adminBtn.parentNode.replaceChild(novoAdminBtn, adminBtn);
+
+  novoAdminBtn.addEventListener('click', () => {
+    msgLogin.textContent = '';
+    document.getElementById('adminSenhaInput').value = '';
+    modalLogin.classList.add('visible');
+  });
+
+  document.getElementById('btnCancelarLogin').addEventListener('click', () => {
+    modalLogin.classList.remove('visible');
+  });
+
+  document.getElementById('btnConfirmarLogin').addEventListener('click', async () => {
+    const email = document.getElementById('adminEmailInput').value.trim();
+    const senha = document.getElementById('adminSenhaInput').value;
+    const btnEntrar = document.getElementById('btnConfirmarLogin');
+
+    if (!email || !senha) { msgLogin.textContent = 'Preencha todos os campos.'; return; }
+
+    btnEntrar.textContent = 'Aguarde...';
 
     try {
-      const auth = getAuth();
-      // Valida o usuário e a senha diretamente no cofre do Google
       await signInWithEmailAndPassword(auth, email, senha);
-      
-      // Se a senha estiver correta, libera o acesso ao painel
       sessionStorage.setItem('painelAutorizado', 'true');
       window.location.href = 'painel.html';
-    } catch (err) { 
-      console.error(err); 
-      alert('Acesso negado: E-mail ou senha incorretos.'); 
+    } catch (err) {
+      console.error(err);
+      msgLogin.textContent = 'E-mail ou senha incorretos.';
+      btnEntrar.textContent = 'Entrar';
     }
   });
 
