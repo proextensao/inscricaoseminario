@@ -1950,6 +1950,215 @@ enableIndexedDbPersistence(db).catch((err) => {
 
 
 
+  // ── BREVO: ENVIAR E-MAIL ──────────────────────────────────────────────────
+
+  const BREVO_KEY = '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';
+
+  async function enviarEmail({ para, nome, assunto, html }) {
+    try {
+      await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: { 'api-key': BREVO_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sender: { name: 'Seminário de Extensão de Administração - UFRRJ/IM', email: 'israelsa@ufrrj.br' },
+          to: [{ email: para, name: nome }],
+          subject: assunto,
+          htmlContent: html
+        })
+      });
+    } catch (err) { console.warn('Erro ao enviar e-mail:', err); }
+  }
+
+  function htmlConfirmacaoInscricao({ nome, dataInscricao }) {
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>
+  body{margin:0;padding:0;background:#0d0d0d;font-family:'Georgia',serif;}
+  .wrap{max-width:580px;margin:0 auto;background:#111111;border:1px solid rgba(212,175,85,0.2);}
+  .header{background:linear-gradient(135deg,#0d0d0d 0%,#1a1500 100%);padding:48px 40px 36px;border-bottom:1px solid rgba(212,175,85,0.25);text-align:center;}
+  .tag{display:inline-block;font-size:9px;letter-spacing:0.28em;text-transform:uppercase;color:#d4af55;border:1px solid rgba(212,175,85,0.35);padding:4px 14px;margin-bottom:20px;font-family:monospace;}
+  .title{font-size:2rem;font-weight:300;color:#f0ece4;line-height:1.2;margin:0;}
+  .title em{color:#d4af55;font-style:italic;}
+  .body{padding:40px;}
+  .greeting{font-size:1.1rem;color:#f0ece4;margin-bottom:24px;font-weight:300;}
+  .greeting strong{color:#d4af55;}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,85,0.3),transparent);margin:28px 0;}
+  .info-box{background:rgba(212,175,85,0.05);border:1px solid rgba(212,175,85,0.2);border-radius:6px;padding:24px;margin-bottom:24px;}
+  .info-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+  .info-row:last-child{margin-bottom:0;}
+  .info-icon{color:#d4af55;font-size:14px;min-width:20px;margin-top:1px;}
+  .info-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(240,236,228,0.45);font-family:monospace;margin-bottom:3px;}
+  .info-value{font-size:13px;color:#f0ece4;}
+  .alert{background:rgba(212,175,85,0.08);border-left:3px solid #d4af55;padding:14px 18px;border-radius:0 4px 4px 0;font-size:12px;color:rgba(240,236,228,0.8);line-height:1.7;margin-bottom:24px;font-family:monospace;}
+  .footer{background:#0d0d0d;padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);}
+  .footer p{font-size:10px;color:rgba(240,236,228,0.3);letter-spacing:0.1em;margin:0;font-family:monospace;}
+  .check{display:inline-block;background:rgba(143,240,164,0.12);border:1px solid rgba(143,240,164,0.25);color:#8ff0a4;padding:10px 20px;border-radius:4px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:monospace;margin-bottom:24px;}
+</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <div class="tag">Inscrição Confirmada · 2026-1</div>
+    <h1 class="title">Seminário de Extensão<br><em>3° Período</em></h1>
+  </div>
+  <div class="body">
+    <p class="greeting">Olá, <strong>${nome}</strong>!</p>
+    <div class="check">✦ &nbsp;Inscrição registrada com sucesso</div>
+    <p style="font-size:13px;color:rgba(240,236,228,0.7);line-height:1.8;margin-bottom:24px;">
+      Sua inscrição no Seminário de Extensão foi confirmada. Guarde as informações abaixo e não se esqueça de comparecer no dia do evento.
+    </p>
+    <div class="info-box">
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Data do evento</div><div class="info-value">2 de Junho de 2026</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Horário</div><div class="info-value">18h30</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Local</div><div class="info-value">Auditório IM — UFRRJ</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Sua inscrição foi realizada em</div><div class="info-value">${dataInscricao}</div></div>
+      </div>
+    </div>
+    <div class="alert">
+      ⏱ &nbsp;Chegue <strong>15 minutos antes</strong> do início para garantir seu lugar e registrar sua presença com tranquilidade.
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:11px;color:rgba(240,236,228,0.4);line-height:1.8;font-family:monospace;">
+      No dia do evento, você poderá confirmar sua presença e responder ao questionário opcional para conquistar até <strong style="color:#d4af55;">25 horas complementares</strong>.
+    </p>
+  </div>
+  <div class="footer">
+    <p>© 2026 · Seminário de Extensão — 3° Período · UFRRJ/IM</p>
+    <p style="margin-top:6px;">Este e-mail foi enviado para ${nome}. Não responda a esta mensagem.</p>
+  </div>
+</div></body></html>`;
+  }
+
+  function htmlResultadoHoras({ nome, acertos, horasExtras, horasTotal, detalhesQuestoes, soPres }) {
+    const QUESTOES = [
+      { n:1,  texto:'O que define a extensão universitária na atualidade?', opcoes:{ a:'A transmissão unilateral de informações da academia para o público leigo.', b:'A interação dialógica entre a universidade e a sociedade, articulando ensino e pesquisa.', c:'O desenvolvimento exclusivo de pesquisas teóricas em ambiente acadêmico fechado.', d:'A prestação assistencialista de serviços pelo Estado para a sociedade.' }, correta:'b' },
+      { n:2,  texto:'Qual é o percentual mínimo da carga horária total dos cursos de graduação que deve ser destinado às atividades de extensão?', opcoes:{ a:'5%', b:'15%', c:'10%', d:'20%' }, correta:'c' },
+      { n:3,  texto:'No curso de Administração da UFRRJ, qual é a carga horária obrigatória de extensão que o aluno precisa cumprir?', opcoes:{ a:'120h', b:'200h', c:'60h', d:'300h' }, correta:'d' },
+      { n:4,  texto:'Qual dispositivo legal estabeleceu, inicialmente, o princípio da indissociabilidade entre ensino, pesquisa e extensão no Brasil?', opcoes:{ a:'Estatuto das Universidades Brasileiras de 1931', b:'Constituição Federal de 1988', c:'Lei de Diretrizes e Bases da Educação de 1961', d:'Política Nacional de Extensão de 2012' }, correta:'b' },
+      { n:5,  texto:'Como a carga horária de extensão está estruturada na matriz curricular do curso de Administração da UFRRJ?', opcoes:{ a:'Um componente de Seminários de Extensão (60h) e dois Percursos Extensionistas (120h cada).', b:'Dois Seminários de Extensão (150h cada).', c:'Três Percursos Extensionistas (100h cada).', d:'Um componente introdutório (100h) e atividades complementares livres (200h).' }, correta:'a' },
+      { n:6,  texto:'Na tipologia de ações extensionistas da base teórica da UFRRJ, qual é a principal diferença entre Programa e Projeto?', opcoes:{ a:'O Programa exige financiamento externo; o Projeto utiliza recursos próprios.', b:'O Programa é voltado apenas para discentes; o Projeto atende servidores técnicos.', c:'O Programa tem caráter estruturante e de longo prazo; o Projeto tem objetivos específicos e prazos determinados.', d:'O Programa foca em prestação de serviços; o Projeto foca em difusão cultural.' }, correta:'c' },
+      { n:7,  texto:'Quais são as três funções fundamentais da universidade integradas pelo princípio da indissociabilidade?', opcoes:{ a:'Graduação, especialização e mestrado.', b:'Administração, contabilidade e economia.', c:'Ensino, pesquisa e extensão.', d:'Esporte, cultura e lazer.' }, correta:'c' },
+      { n:8,  texto:'A extensão universitária busca estabelecer diálogo e reconhecer a interação entre quais tipos de conhecimento?', opcoes:{ a:'O conhecimento exato e o conhecimento biológico.', b:'O conhecimento acadêmico e o conhecimento popular.', c:'O conhecimento empírico e o conhecimento tecnológico fechado.', d:'O conhecimento financeiro e o conhecimento mercadológico.' }, correta:'b' },
+      { n:9,  texto:'Qual o limite máximo de carga horária em Atividades Acadêmicas Complementares (Autônomas) que pode ser contabilizado e articulado com a extensão no curso?', opcoes:{ a:'60 horas', b:'100 horas', c:'120 horas', d:'150 horas' }, correta:'b' },
+      { n:10, texto:'Por que atividades como estágio, iniciação científica e aulas práticas não contabilizam horas de extensão curricular obrigatória?', opcoes:{ a:'Porque são administradas pela Pró-Reitoria de Planejamento (PROPLADI) e não pela PROEXT.', b:'Porque exigem avaliação teórica ao final do curso, o que fere o estatuto de curricularização.', c:'Porque não possuem caráter prático e são realizadas apenas no ambiente virtual de ensino.', d:'Porque não atingem o objetivo central da extensão (a troca dialógica) e por haver impossibilidade de cômputo duplo em componentes curriculares.' }, correta:'d' },
+      { n:11, texto:'De acordo com o marco conceitual e teórico do Projeto Pedagógico do Curso (PPC), como a extensão universitária é definida?', opcoes:{ a:'Um processo interdisciplinar, educativo, cultural, científico e político sob o prisma da interação dialógica entre saber acadêmico e saber popular.', b:'Uma obrigação curricular de caráter individual que dispensa a atuação de grupos discentes e docentes organizados.', c:'Um projeto filantrópico cujo único objetivo é o financiamento de pesquisas locais e difusão de tecnologias restritas.', d:'Uma atividade extracurricular opcional que substitui os créditos obrigatórios de iniciação científica.' }, correta:'a' },
+      { n:12, texto:'O que ocorre caso o aluno não cumpra a carga horária mínima exigida em atividades de extensão na UFRRJ?', opcoes:{ a:'A carga horária faltante é convertida em horas de estágio supervisionado.', b:'O aluno é dispensado do requisito se possuir vínculo empregatício formal.', c:'O aluno não consegue colar grau e deverá refazer a atividade, pois é um requisito de integralização obrigatório.', d:'As horas são substituídas automaticamente por disciplinas teóricas optativas.' }, correta:'c' }
+    ];
+
+    let questoesHtml = '';
+    if (!soPres && detalhesQuestoes && detalhesQuestoes.length) {
+      questoesHtml = `
+      <div style="margin-top:32px;">
+        <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:#d4af55;margin-bottom:20px;font-family:monospace;">◈ Gabarito detalhado</div>
+        ${QUESTOES.map((q, i) => {
+          const det = detalhesQuestoes[i] || {};
+          const certo = det.certo;
+          const selLetra = (det.selecionado || '').toUpperCase();
+          const corrLetra = q.correta.toUpperCase();
+          const corBorda = certo ? 'rgba(143,240,164,0.35)' : 'rgba(224,92,92,0.35)';
+          const corFundo = certo ? 'rgba(143,240,164,0.04)' : 'rgba(224,92,92,0.04)';
+          const icone = certo ? '✓' : '✗';
+          const corIcone = certo ? '#8ff0a4' : '#e05c5c';
+          return `
+          <div style="border:1px solid ${corBorda};background:${corFundo};border-radius:6px;padding:18px 20px;margin-bottom:12px;">
+            <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px;">
+              <span style="font-family:monospace;font-size:10px;color:#d4af55;min-width:60px;">QUESTÃO ${q.n}</span>
+              <span style="font-size:14px;color:${corIcone};font-weight:bold;">${icone}</span>
+            </div>
+            <p style="font-size:12px;color:#f0ece4;margin:0 0 12px;line-height:1.6;">${q.texto}</p>
+            ${certo
+              ? `<div style="background:rgba(143,240,164,0.1);border:1px solid rgba(143,240,164,0.25);border-radius:4px;padding:10px 14px;font-size:11px;color:#8ff0a4;font-family:monospace;">
+                  ✓ &nbsp;Sua resposta (${selLetra}): ${q.opcoes[det.selecionado] || ''}
+                </div>`
+              : `<div style="background:rgba(224,92,92,0.08);border:1px solid rgba(224,92,92,0.2);border-radius:4px;padding:10px 14px;font-size:11px;color:#e05c5c;font-family:monospace;margin-bottom:8px;">
+                  ✗ &nbsp;Sua resposta (${selLetra}): ${q.opcoes[det.selecionado] || ''}
+                </div>
+                <div style="background:rgba(143,240,164,0.08);border:1px solid rgba(143,240,164,0.2);border-radius:4px;padding:10px 14px;font-size:11px;color:#8ff0a4;font-family:monospace;">
+                  ✓ &nbsp;Resposta correta (${corrLetra}): ${q.opcoes[q.correta] || ''}
+                </div>`
+            }
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    const erros = soPres ? 0 : (12 - acertos);
+    let faixa = '';
+    if (soPres) faixa = 'Você confirmou sua presença e garantiu suas horas complementares!';
+    else if (acertos === 12) faixa = '🏆 Parabéns! Você acertou TODAS as questões!';
+    else if (acertos >= 10) faixa = '🥇 Excelente! Faixa de 10–11 acertos.';
+    else if (acertos >= 5)  faixa = '🥈 Bom! Faixa de 5–9 acertos.';
+    else faixa = `Você acertou ${acertos} questão(ões). Eram necessárias 5 para horas extras.`;
+
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>
+  body{margin:0;padding:0;background:#0d0d0d;font-family:'Georgia',serif;}
+  .wrap{max-width:580px;margin:0 auto;background:#111111;border:1px solid rgba(212,175,85,0.2);}
+  .header{background:linear-gradient(135deg,#0d0d0d 0%,#1a1500 100%);padding:48px 40px 36px;border-bottom:1px solid rgba(212,175,85,0.25);text-align:center;}
+  .tag{display:inline-block;font-size:9px;letter-spacing:0.28em;text-transform:uppercase;color:#d4af55;border:1px solid rgba(212,175,85,0.35);padding:4px 14px;margin-bottom:20px;font-family:monospace;}
+  .title{font-size:2rem;font-weight:300;color:#f0ece4;line-height:1.2;margin:0;}
+  .title em{color:#d4af55;font-style:italic;}
+  .body{padding:40px;}
+  .score-box{text-align:center;background:rgba(212,175,85,0.05);border:1px solid rgba(212,175,85,0.25);border-radius:8px;padding:32px;margin-bottom:28px;}
+  .score-num{font-size:3.5rem;color:#d4af55;line-height:1;margin-bottom:4px;font-weight:300;}
+  .score-label{font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(240,236,228,0.45);font-family:monospace;}
+  .horas-num{font-size:2.2rem;color:#e8cc7a;margin:16px 0 4px;font-weight:300;}
+  .summary-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06);font-size:12px;}
+  .summary-row:last-child{border-bottom:none;font-size:14px;color:#d4af55;}
+  .summary-label{color:rgba(240,236,228,0.55);font-family:monospace;}
+  .summary-val{color:#f0ece4;font-family:monospace;}
+  .faixa{background:rgba(212,175,85,0.07);border-left:3px solid #d4af55;padding:12px 16px;font-size:12px;color:rgba(240,236,228,0.8);line-height:1.7;margin-bottom:28px;font-family:monospace;}
+  .divider{height:1px;background:linear-gradient(90deg,transparent,rgba(212,175,85,0.3),transparent);margin:28px 0;}
+  .footer{background:#0d0d0d;padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);}
+  .footer p{font-size:10px;color:rgba(240,236,228,0.3);letter-spacing:0.1em;margin:0;font-family:monospace;}
+</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <div class="tag">Resultado · Horas Complementares</div>
+    <h1 class="title">Seminário de Extensão<br><em>3° Período</em></h1>
+  </div>
+  <div class="body">
+    <p style="font-size:1.1rem;color:#f0ece4;margin-bottom:24px;font-weight:300;">Olá, <strong style="color:#d4af55;">${nome}</strong>!</p>
+    <div class="score-box">
+      ${soPres ? `
+        <div style="font-size:2.5rem;margin-bottom:8px;">✦</div>
+        <div class="score-label">Presença confirmada</div>
+        <div class="horas-num">5h</div>
+        <div class="score-label">horas complementares garantidas</div>
+      ` : `
+        <div class="score-label">Você acertou</div>
+        <div class="score-num">${acertos}/12</div>
+        <div class="score-label">${Math.round((acertos/12)*100)}% de aproveitamento</div>
+        <div class="horas-num">+${horasExtras}h</div>
+        <div class="score-label">horas adicionais pelo questionário</div>
+      `}
+    </div>
+    <div class="faixa">${faixa}</div>
+    <div style="background:rgba(255,255,255,0.02);border:1px solid rgba(212,175,85,0.2);border-radius:6px;padding:20px 24px;margin-bottom:28px;">
+      <div style="font-size:9px;letter-spacing:0.22em;text-transform:uppercase;color:#d4af55;margin-bottom:14px;font-family:monospace;">◈ Resumo de horas</div>
+      <div class="summary-row"><span class="summary-label">Presença no seminário</span><span class="summary-val">5h</span></div>
+      ${!soPres ? `<div class="summary-row"><span class="summary-label">Bônus pelo questionário</span><span class="summary-val">+${horasExtras}h</span></div>` : ''}
+      <div class="summary-row"><span class="summary-label"><strong>Total de horas complementares</strong></span><span class="summary-val"><strong>${horasTotal}h</strong></span></div>
+    </div>
+    ${!soPres ? `<div style="font-size:11px;color:rgba(240,236,228,0.4);font-family:monospace;margin-bottom:28px;">Referência: 5–9 acertos = +5h &nbsp;·&nbsp; 10–11 acertos = +10h &nbsp;·&nbsp; 12 acertos = +20h</div>` : ''}
+    <div class="divider"></div>
+    ${questoesHtml}
+  </div>
+  <div class="footer">
+    <p>© 2026 · Seminário de Extensão — 3° Período · UFRRJ/IM</p>
+    <p style="margin-top:6px;">Este e-mail foi enviado para ${nome}. Não responda a esta mensagem.</p>
+  </div>
+</div></body></html>`;
+  }
+
   // ── GABARITO ─────────────────────────────────────────────────────────────
 
   const GABARITO = { q1:'b', q2:'c', q3:'d', q4:'b', q5:'a', q6:'c', q7:'c', q8:'b', q9:'b', q10:'d', q11:'a', q12:'c' };
@@ -2360,7 +2569,18 @@ enableIndexedDbPersistence(db).catch((err) => {
 
     try {
 
-      await window.addDoc(window.collection(window.db, 'inscricoes'), dados);
+      await window.addDoc(window.collection(window.db, 'inscricoes'), { ...dados, email_enviado: true });
+
+      // Enviar e-mail de confirmação de inscrição
+      if (dados.email) {
+        const agora = new Date().toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' });
+        enviarEmail({
+          para: dados.email,
+          nome: dados.nome,
+          assunto: '✦ Inscrição confirmada — Seminário de Extensão 3° Período',
+          html: htmlConfirmacaoInscricao({ nome: dados.nome, dataInscricao: agora })
+        });
+      }
 
       document.getElementById('inscricaoForm').style.display = 'none';
 
@@ -2565,6 +2785,16 @@ enableIndexedDbPersistence(db).catch((err) => {
     msg.innerHTML = `✅ Tudo certo! Suas <strong>5 horas complementares</strong> foram registradas com sucesso. Obrigado pela participação!`;
 
     msg.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    // Enviar e-mail de resultado apenas com presença (5h)
+    if (_inscritoDados && _inscritoDados.email) {
+      enviarEmail({
+        para: _inscritoDados.email,
+        nome: _inscritoDados.nome,
+        assunto: '✦ Suas horas complementares — Seminário de Extensão',
+        html: htmlResultadoHoras({ nome: _inscritoDados.nome, acertos: 0, horasExtras: 0, horasTotal: 5, detalhesQuestoes: [], soPres: true })
+      });
+    }
 
   });
 
@@ -2819,6 +3049,16 @@ enableIndexedDbPersistence(db).catch((err) => {
     resultEl.classList.add('visible');
 
     resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Enviar e-mail com resultado do questionário
+    if (dadosDoc && dadosDoc.email) {
+      enviarEmail({
+        para: dadosDoc.email,
+        nome: dadosDoc.nome,
+        assunto: `✦ Resultado do questionário — ${acertos}/12 acertos · ${5 + horasExtras}h complementares`,
+        html: htmlResultadoHoras({ nome: dadosDoc.nome, acertos, horasExtras, horasTotal, detalhesQuestoes: detalhes, soPres: false })
+      });
+    }
 
   });
 
