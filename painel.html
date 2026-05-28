@@ -722,7 +722,7 @@
 
   // ── BREVO: ENVIAR E-MAIL ──────────────────────────────────────────────────
 
-  const BREVO_KEY = 'keysib-b2da22569a91b267332e78fd660d8c5c3b7d141be81e258fceb7127771ea1619-yDtJvQKJhoX1vur8';
+  const BREVO_KEY = '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';
 
   async function enviarEmailBrevo({ para, nome, assunto, html }) {
     const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -800,65 +800,7 @@
 </div></body></html>`;
   }
 
-  // ── ENVIAR E-MAIL PARA INSCRITOS ANTIGOS ──────────────────────────────────
 
-  document.getElementById('btnEnviarEmailAntigos').addEventListener('click', async () => {
-    const btn = document.getElementById('btnEnviarEmailAntigos');
-    const pendentes = todosInscritos.filter(i => !i.email_enviado && i.email);
-
-    if (pendentes.length === 0) {
-      showToast('Todos os inscritos já receberam o e-mail! ✓');
-      return;
-    }
-
-    const confirmar = confirm(`Enviar e-mail de lembrete para ${pendentes.length} inscrito(s) que ainda não receberam?\n\nEsta ação não pode ser desfeita.`);
-    if (!confirmar) return;
-
-    btn.disabled = true;
-    btn.classList.add('enviando');
-    btn.textContent = `ENVIANDO 0/${pendentes.length}…`;
-
-    let enviados = 0;
-    let erros = 0;
-
-    for (const inscrito of pendentes) {
-      try {
-        // Formatar data de inscrição
-        let dataInscricao = 'Data não disponível';
-        if (inscrito.inscrito_em) {
-          const ts = inscrito.inscrito_em.toDate ? inscrito.inscrito_em.toDate() : new Date(inscrito.inscrito_em);
-          dataInscricao = ts.toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' });
-        }
-
-        await enviarEmailBrevo({
-          para: inscrito.email,
-          nome: inscrito.nome,
-          assunto: '✦ Lembrete — Seminário de Extensão 3° Período · 2 de Junho',
-          html: htmlConfirmacaoAntigo({ nome: inscrito.nome, dataInscricao })
-        });
-
-        // Marcar como enviado no Firestore
-        await updateDoc(doc(db, 'inscricoes', inscrito.id), { email_enviado: true });
-        enviados++;
-        btn.textContent = `ENVIANDO ${enviados}/${pendentes.length}…`;
-
-        // Pequena pausa para não sobrecarregar a API
-        await new Promise(r => setTimeout(r, 300));
-      } catch (err) {
-        console.error(`Erro ao enviar para ${inscrito.email}:`, err);
-        erros++;
-      }
-    }
-
-    btn.disabled = false;
-    btn.classList.remove('enviando');
-    btn.textContent = '✉ ENVIAR E-MAIL INSCRITOS';
-
-    const msg = erros > 0
-      ? `${enviados} e-mail(s) enviados. ${erros} erro(s).`
-      : `✓ ${enviados} e-mail(s) enviados com sucesso!`;
-    showToast(msg);
-  });
 
   function htmlLembreteDia({ nome }) {
     return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
