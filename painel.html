@@ -72,6 +72,9 @@
     .btn-pdf:hover{background:rgba(91,168,212,0.08);}
     .btn-excel{background:transparent;color:#5bd48a;border-color:rgba(91,212,138,0.4);}
     .btn-excel:hover{background:rgba(91,212,138,0.08);}
+    .btn-email{background:transparent;color:#c084fc;border-color:rgba(192,132,252,0.4);}
+    .btn-email:hover{background:rgba(192,132,252,0.08);}
+    .btn-email.enviando{opacity:0.6;cursor:not-allowed;}
     .btn-alterar-senha{background:transparent;color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
     .btn-alterar-senha:hover{background:rgba(255,255,255,0.04);}
     .btn-voltar{background:transparent;color:var(--text-muted);border-color:rgba(255,255,255,0.15);}
@@ -177,6 +180,7 @@
     <div class="btn-row-top">
       <button class="btn btn-liberar-horas"       id="btnLiberarHoras">LIBERAR HORAS COMPLEMENTARES</button>
       <button class="btn btn-liberar-inscricoes"  id="btnLiberarInscricoes">LIBERAR INSCRIÇÕES</button>
+      <button class="btn btn-email"               id="btnEnviarEmailAntigos">✉ ENVIAR E-MAIL INSCRITOS</button>
       <button class="btn btn-pdf"                 id="exportPdfTodosBtn">PDF — TODOS</button>
       <button class="btn btn-pdf"                 id="exportPdfHcBtn">PDF — SOMENTE HC</button>
       <button class="btn btn-excel"               id="exportExcelTodosBtn">EXCEL — TODOS</button>
@@ -711,6 +715,146 @@
       document.getElementById('modalSenha').classList.remove('visible');
       showToast('Senha alterada com sucesso!');
     } catch (err) { console.error(err); msgEl.textContent = 'Erro ao alterar senha.'; }
+  });
+
+  // ── BREVO: ENVIAR E-MAIL ──────────────────────────────────────────────────
+
+  const BREVO_KEY = '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';
+
+  async function enviarEmailBrevo({ para, nome, assunto, html }) {
+    const resp = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': BREVO_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sender: { name: 'Seminário de Extensão de Administração - UFRRJ/IM', email: 'israelsa@ufrrj.br' },
+        to: [{ email: para, name: nome }],
+        subject: assunto,
+        htmlContent: html
+      })
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+  }
+
+  function htmlConfirmacaoAntigo({ nome, dataInscricao }) {
+    return `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<style>
+  body{margin:0;padding:0;background:#0d0d0d;font-family:'Georgia',serif;}
+  .wrap{max-width:580px;margin:0 auto;background:#111111;border:1px solid rgba(212,175,85,0.2);}
+  .header{background:linear-gradient(135deg,#0d0d0d 0%,#1a1500 100%);padding:48px 40px 36px;border-bottom:1px solid rgba(212,175,85,0.25);text-align:center;}
+  .tag{display:inline-block;font-size:9px;letter-spacing:0.28em;text-transform:uppercase;color:#d4af55;border:1px solid rgba(212,175,85,0.35);padding:4px 14px;margin-bottom:20px;font-family:monospace;}
+  .title{font-size:2rem;font-weight:300;color:#f0ece4;line-height:1.2;margin:0;}
+  .title em{color:#d4af55;font-style:italic;}
+  .body{padding:40px;}
+  .info-box{background:rgba(212,175,85,0.05);border:1px solid rgba(212,175,85,0.2);border-radius:6px;padding:24px;margin-bottom:24px;}
+  .info-row{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px;}
+  .info-row:last-child{margin-bottom:0;}
+  .info-icon{color:#d4af55;font-size:14px;min-width:20px;margin-top:1px;}
+  .info-label{font-size:9px;letter-spacing:0.2em;text-transform:uppercase;color:rgba(240,236,228,0.45);font-family:monospace;margin-bottom:3px;}
+  .info-value{font-size:13px;color:#f0ece4;}
+  .alert{background:rgba(212,175,85,0.08);border-left:3px solid #d4af55;padding:14px 18px;font-size:12px;color:rgba(240,236,228,0.8);line-height:1.7;margin-bottom:24px;font-family:monospace;}
+  .footer{background:#0d0d0d;padding:24px 40px;text-align:center;border-top:1px solid rgba(255,255,255,0.06);}
+  .footer p{font-size:10px;color:rgba(240,236,228,0.3);letter-spacing:0.1em;margin:0;font-family:monospace;}
+  .check{display:inline-block;background:rgba(143,240,164,0.12);border:1px solid rgba(143,240,164,0.25);color:#8ff0a4;padding:10px 20px;border-radius:4px;font-size:11px;letter-spacing:0.15em;text-transform:uppercase;font-family:monospace;margin-bottom:24px;}
+</style></head><body>
+<div class="wrap">
+  <div class="header">
+    <div class="tag">Lembrete · Inscrição Confirmada · 2026-1</div>
+    <h1 class="title">Seminário de Extensão<br><em>3° Período</em></h1>
+  </div>
+  <div class="body">
+    <p style="font-size:1.1rem;color:#f0ece4;margin-bottom:16px;font-weight:300;">Olá, <strong style="color:#d4af55;">${nome}</strong>!</p>
+    <div class="check">✦ &nbsp;Você está inscrito(a)</div>
+    <p style="font-size:13px;color:rgba(240,236,228,0.7);line-height:1.8;margin-bottom:24px;">
+      Este é um lembrete de que você se inscreveu no Seminário de Extensão. O evento está chegando — confirme os detalhes abaixo!
+    </p>
+    <div class="info-box">
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Data do evento</div><div class="info-value">2 de Junho de 2026</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Horário</div><div class="info-value">18h30</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Local</div><div class="info-value">Auditório IM — UFRRJ</div></div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon">◈</div>
+        <div><div class="info-label">Sua inscrição foi realizada em</div><div class="info-value">${dataInscricao}</div></div>
+      </div>
+    </div>
+    <div class="alert">⏱ &nbsp;Chegue <strong>15 minutos antes</strong> do início para registrar sua presença com tranquilidade.</div>
+    <p style="font-size:11px;color:rgba(240,236,228,0.4);line-height:1.8;font-family:monospace;">
+      No dia do evento, você poderá confirmar sua presença e responder ao questionário opcional para conquistar até <strong style="color:#d4af55;">25 horas complementares</strong>.
+    </p>
+  </div>
+  <div class="footer">
+    <p>© 2026 · Seminário de Extensão — 3° Período · UFRRJ/IM</p>
+    <p style="margin-top:6px;">Este e-mail foi enviado para ${nome}. Não responda a esta mensagem.</p>
+  </div>
+</div></body></html>`;
+  }
+
+  // ── ENVIAR E-MAIL PARA INSCRITOS ANTIGOS ──────────────────────────────────
+
+  document.getElementById('btnEnviarEmailAntigos').addEventListener('click', async () => {
+    const btn = document.getElementById('btnEnviarEmailAntigos');
+    const pendentes = todosInscritos.filter(i => !i.email_enviado && i.email);
+
+    if (pendentes.length === 0) {
+      showToast('Todos os inscritos já receberam o e-mail! ✓');
+      return;
+    }
+
+    const confirmar = confirm(`Enviar e-mail de lembrete para ${pendentes.length} inscrito(s) que ainda não receberam?\n\nEsta ação não pode ser desfeita.`);
+    if (!confirmar) return;
+
+    btn.disabled = true;
+    btn.classList.add('enviando');
+    btn.textContent = `ENVIANDO 0/${pendentes.length}…`;
+
+    let enviados = 0;
+    let erros = 0;
+
+    for (const inscrito of pendentes) {
+      try {
+        // Formatar data de inscrição
+        let dataInscricao = 'Data não disponível';
+        if (inscrito.inscrito_em) {
+          const ts = inscrito.inscrito_em.toDate ? inscrito.inscrito_em.toDate() : new Date(inscrito.inscrito_em);
+          dataInscricao = ts.toLocaleString('pt-BR', { dateStyle: 'full', timeStyle: 'short' });
+        }
+
+        await enviarEmailBrevo({
+          para: inscrito.email,
+          nome: inscrito.nome,
+          assunto: '✦ Lembrete — Seminário de Extensão 3° Período · 2 de Junho',
+          html: htmlConfirmacaoAntigo({ nome: inscrito.nome, dataInscricao })
+        });
+
+        // Marcar como enviado no Firestore
+        await updateDoc(doc(db, 'inscricoes', inscrito.id), { email_enviado: true });
+        enviados++;
+        btn.textContent = `ENVIANDO ${enviados}/${pendentes.length}…`;
+
+        // Pequena pausa para não sobrecarregar a API
+        await new Promise(r => setTimeout(r, 300));
+      } catch (err) {
+        console.error(`Erro ao enviar para ${inscrito.email}:`, err);
+        erros++;
+      }
+    }
+
+    btn.disabled = false;
+    btn.classList.remove('enviando');
+    btn.textContent = '✉ ENVIAR E-MAIL INSCRITOS';
+
+    const msg = erros > 0
+      ? `${enviados} e-mail(s) enviados. ${erros} erro(s).`
+      : `✓ ${enviados} e-mail(s) enviados com sucesso!`;
+    showToast(msg);
   });
 
   // ── VOLTAR ─────────────────────────────────────────────────────────────────
