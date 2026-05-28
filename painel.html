@@ -335,6 +335,7 @@
 
 <!-- ══ PAINEL SCRIPT (módulo isolado) ══ -->
 <script type="module">
+  import { signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
   // A chave Brevo é carregada do Firestore — não fica exposta no código-fonte.
   // Armazene-a em: configuracoes/segredos  campo: brevoKey
   // Isso garante que ela só é acessível para quem já está autenticado no Firebase.
