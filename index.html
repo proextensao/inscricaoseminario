@@ -2369,15 +2369,17 @@
 
       } else {
 
-        loginOverlay.classList.remove('visible');
-        form.style.display = 'block';
-        if (dateRow) dateRow.style.display = '';
-        hcContainer.classList.remove('visible');
-        title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
-        subtitle.innerHTML = 'Inscrições abertas para todos.';
+            // Só esconde o modal se ele NÃO tiver sido aberto manualmente pelo botão
+            if (loginOverlay.getAttribute('data-manual') !== 'true') {
+              loginOverlay.classList.remove('visible');
+            }
+            form.style.display = 'block';
+            if (dateRow) dateRow.style.display = '';
+            hcContainer.classList.remove('visible');
+            title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
+            subtitle.innerHTML = 'Inscrições abertas para todos.';
 
-      }
-
+          }
       // QUIZ LIBERADO VIA PAINEL
       if (dados.quizLiberado === true) {
 
@@ -2395,10 +2397,15 @@
 
   setInterval(verificarConfig, 3000);
 
-  // Quando o estado de auth mudar (login/logout), re-verifica
+ // Gerencia o estado e redireciona ao painel SOMENTE após o login manual
   window.onAuthStateChanged(window.auth, (user) => {
     window._authUser = user || null;
     verificarConfig();
+
+    const loginOverlay = document.getElementById('hcLoginOverlay');
+    if (user && loginOverlay.getAttribute('data-manual') === 'true') {
+      window.location.href = 'painel.html';
+    }
   });
 
   // ── LOGIN NO MODAL DE HORAS COMPLEMENTARES ────────────────────────────────
@@ -2432,28 +2439,17 @@
   });
 
   // ── BOTÃO PAINEL ──────────────────────────────────────────────────────────
-
   document.getElementById('adminBtn').addEventListener('click', async () => {
-
-    // Se já estiver autenticado, vai direto para o painel
-    await window._authReady;
-    if (window._authUser) {
-      window.location.href = 'painel.html';
-      return;
-    }
-
-    // Senão, abre o modal de login — ao autenticar, redireciona
     const loginOverlay = document.getElementById('hcLoginOverlay');
+    
+    // 1. Marca que o modal foi aberto pelo botão (impede a Correção 1 de fechá-lo no celular)
+    loginOverlay.setAttribute('data-manual', 'true');
+    
+    // 2. FORÇA o logout imediato para garantir que a senha seja exigida SEMPRE
+    await window.signOut(window.auth);
+    
+    // 3. Exibe a tela de login
     loginOverlay.classList.add('visible');
-
-    // Quando autenticar via modal neste contexto, redireciona ao painel
-    const unsubscribe = window.onAuthStateChanged(window.auth, (user) => {
-      if (user) {
-        unsubscribe();
-        window.location.href = 'painel.html';
-      }
-    });
-
   });
 
 
