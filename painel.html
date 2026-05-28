@@ -282,7 +282,6 @@
       <button class="btn btn-excel"              id="exportExcelHcBtn">EXCEL — SOMENTE HC</button>
     </div>
     <div class="btn-row-bottom">
-      <button class="btn btn-sair"   id="btnSair">SAIR</button>
       <button class="btn btn-voltar" id="voltarBtn">VOLTAR</button>
     </div>
   </div>
@@ -329,6 +328,18 @@
 </div>
 
 </div><!-- /mainPanel -->
+
+<!-- MODAL QR CODE -->
+<div id="qrModal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.85);align-items:center;justify-content:center;">
+  <div style="background:#141414;border:1px solid rgba(212,175,85,0.35);border-radius:14px;padding:48px 44px;text-align:center;max-width:420px;width:92vw;position:relative;">
+    <div style="font-size:9px;letter-spacing:0.25em;text-transform:uppercase;color:rgba(240,236,228,0.45);margin-bottom:10px;">QR Code — Horas Complementares</div>
+    <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;font-weight:300;color:#d4af55;margin-bottom:6px;">Projete na tela do auditório</div>
+    <div style="font-size:10px;color:rgba(240,236,228,0.4);letter-spacing:0.08em;margin-bottom:28px;">Válido por <span id="qrCountdown" style="color:#d4af55;font-weight:500;">30:00</span> minutos</div>
+    <div id="qrCodeImg" style="background:#fff;padding:16px;border-radius:8px;display:inline-block;margin-bottom:24px;"></div>
+    <div style="font-size:10px;color:rgba(240,236,228,0.35);letter-spacing:0.08em;margin-bottom:28px;word-break:break-all;" id="qrUrlLabel"></div>
+    <button id="qrFecharBtn" style="background:transparent;color:rgba(240,236,228,0.5);border:1px solid rgba(255,255,255,0.15);padding:10px 24px;border-radius:4px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;">FECHAR</button>
+  </div>
+</div>
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -419,7 +430,62 @@
       btn.textContent = horasAtivo ? 'LIBERAR INSCRIÇÕES' : 'BLOQUEAR INSCRIÇÕES';
     }
 
-    // ── TOGGLE HORAS ───────────────────────────────────────────────────────────
+    // ── TOGGLE HORAS + GERADOR DE QR CODE ─────────────────────────────────────
+    let qrCountdownInterval = null;
+
+    function gerarToken(tamanho = 10) {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+      let token = '';
+      for (let i = 0; i < tamanho; i++) token += chars[Math.floor(Math.random() * chars.length)];
+      return token;
+    }
+
+    function iniciarCountdownQR(expiresAt) {
+      const el = document.getElementById('qrCountdown');
+      if (qrCountdownInterval) clearInterval(qrCountdownInterval);
+      qrCountdownInterval = setInterval(() => {
+        const restante = Math.max(0, expiresAt - Date.now());
+        const m = String(Math.floor(restante / 60000)).padStart(2, '0');
+        const s = String(Math.floor((restante % 60000) / 1000)).padStart(2, '0');
+        el.textContent = `${m}:${s}`;
+        if (restante === 0) {
+          clearInterval(qrCountdownInterval);
+          el.textContent = 'Expirado';
+          el.style.color = '#e05c5c';
+        }
+      }, 1000);
+    }
+
+    async function abrirModalQR() {
+      const token     = gerarToken();
+      const expiresAt = Date.now() + 30 * 60 * 1000;
+      const ref = doc(db, 'configuracoes', 'painel');
+      await setDoc(ref, { qrToken: token, qrExpiresAt: expiresAt }, { merge: true });
+
+      // Monta URL — usa window.location para funcionar em qualquer domínio
+      const base = window.location.href.replace('painel.html', '').replace(/\/$/, '');
+      const url  = `${base}/index.html?token=${token}`;
+
+      document.getElementById('qrUrlLabel').textContent = url;
+
+      // Gera QR via API pública (qrserver)
+      const qrEl = document.getElementById('qrCodeImg');
+      const img  = document.createElement('img');
+      img.src    = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(url)}`;
+      img.alt    = 'QR Code';
+      img.style.cssText = 'width:220px;height:220px;display:block;';
+      qrEl.innerHTML = '';
+      qrEl.appendChild(img);
+
+      document.getElementById('qrModal').style.display = 'flex';
+      iniciarCountdownQR(expiresAt);
+    }
+
+    document.getElementById('qrFecharBtn').addEventListener('click', () => {
+      document.getElementById('qrModal').style.display = 'none';
+      if (qrCountdownInterval) clearInterval(qrCountdownInterval);
+    });
+
     document.getElementById('btnLiberarHoras').addEventListener('click', async () => {
       try {
         const ref  = doc(db, 'configuracoes', 'painel');
@@ -430,7 +496,14 @@
         atualizarBtnHoras(novo);
         atualizarBtnInscricoes(novo);
         atualizarModoBadge(novo);
-        showToast(novo ? 'Horas complementares liberadas!' : 'Horas complementares bloqueadas.');
+        if (novo) {
+          showToast('Horas complementares liberadas! Gerando QR Code…');
+          await abrirModalQR();
+        } else {
+          // Limpa o token ao bloquear
+          await setDoc(ref, { qrToken: null, qrExpiresAt: null }, { merge: true });
+          showToast('Horas complementares bloqueadas.');
+        }
       } catch (err) { console.error(err); }
     });
 
@@ -896,13 +969,7 @@
       showToast(erros > 0 ? `${enviados} enviado(s). ${erros} erro(s).` : `✓ ${enviados} lembrete(s) enviados!`);
     });
 
-    // ── SAIR ───────────────────────────────────────────────────────────────────
-    document.getElementById('btnSair').addEventListener('click', async () => {
-      await signOut(auth);
-      // onAuthStateChanged redireciona automaticamente para o login
-    });
-
-    document.getElementById('voltarBtn').addEventListener('click', async () => {
+    // ── SAIR ───────────────────────────────────────────────────────────────────    document.getElementById('voltarBtn').addEventListener('click', async () => {
       await signOut(auth);
       window.location.href = 'index.html';
     });
