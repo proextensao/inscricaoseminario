@@ -2608,59 +2608,63 @@
 
 
   // ── ENVIAR INSCRIÇÃO ──────────────────────────────────────────────────────
-
   document.getElementById('inscricaoForm').addEventListener('submit', async (e) => {
-
     e.preventDefault();
-
     if (!validarForm()) return;
 
-
-
     const btn = document.getElementById('btnSubmit');
-
     btn.disabled = true;
-
     btn.textContent = 'Registrando…';
 
-
-
     const curso = document.getElementById('curso').value === 'Outro'
-
       ? document.getElementById('outroCurso').value.trim()
-
       : document.getElementById('curso').value;
 
-
-
     const dados = {
-
       nome:                document.getElementById('nome').value.trim(),
-
       matricula:           document.getElementById('matricula').value.trim(),
-
       email:               document.getElementById('email').value.trim(),
-
       telefone:            document.getElementById('telefone').value,
-
       periodo:             document.getElementById('periodo').value.trim(),
-
       vinculo:             document.getElementById('vinculo').value,
-
       curso,
-
       hc_registrado:        'NÃO',
-
       presenca:             'NÃO',
-
       acertos_questionario: null,
-
       horas_questionario:   0,
-
       inscrito_em:         window.serverTimestamp()
-
     };
 
+    try {
+      
+      // 1. VERIFICAÇÃO DE DUPLICIDADE
+      const inscricoesRef = window.collection(window.db, 'inscricoes');
+      
+      // Checa E-mail
+      const qEmail = window.query(inscricoesRef, window.where('email', '==', dados.email));
+      const snapEmail = await window.getDocs(qEmail);
+      
+      // Checa Telefone
+      const qTel = window.query(inscricoesRef, window.where('telefone', '==', dados.telefone));
+      const snapTel = await window.getDocs(qTel);
+      
+      // Checa Matrícula (apenas se o aluno tiver preenchido)
+      let snapMat = { empty: true };
+      if (dados.matricula) {
+        const qMat = window.query(inscricoesRef, window.where('matricula', '==', dados.matricula));
+        snapMat = await window.getDocs(qMat);
+      }
+
+      // Se qualquer um dos 3 já existir, barra a inscrição
+      if (!snapEmail.empty || !snapTel.empty || !snapMat.empty) {
+        alert('⚠️ ATENÇÃO: Este E-mail, Telefone ou Matrícula já está registrado no seminário!');
+        btn.disabled = false;
+        btn.textContent = 'Confirmar inscrição';
+        return; // Interrompe o código aqui, não salva nada!
+      }
+
+      // 2. SE NÃO FOR DUPLICADO, SALVA NO BANCO
+      await window.addDoc(window.collection(window.db, 'inscricoes'), { ...dados, email_enviado: true });
 
 
     try {
