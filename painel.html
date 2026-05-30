@@ -1774,7 +1774,7 @@
 
 
 
-      await setDoc(ref, { qrToken: token, qrExpiresAt: null }, { merge: true });
+      await setDoc(ref, { qrToken: token, qrExpiresAt: Date.now() + (4 * 60 * 60 * 1000) }, { merge: true });
 
 
 
