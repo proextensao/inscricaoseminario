@@ -2563,13 +2563,18 @@
   // ── BOTÃO PAINEL ──────────────────────────────────────────────────────────
   document.getElementById('adminBtn').addEventListener('click', async () => {
     const loginOverlay = document.getElementById('hcLoginOverlay');
-    
-    // 1. Marca que o modal foi aberto pelo botão (impede a Correção 1 de fechá-lo no celular)
+    if (!loginOverlay) return;
+
+    // 1. Marca que o modal foi aberto pelo botão
     loginOverlay.setAttribute('data-manual', 'true');
-    
-    // 2. FORÇA o logout imediato para garantir que a senha seja exigida SEMPRE
-    await window.signOut(window.auth);
-    
+
+    // 2. Tenta fazer logout (se auth estiver pronto)
+    try {
+      if (window.auth && window.signOut) {
+        await window.signOut(window.auth);
+      }
+    } catch (e) { /* ignora erros de logout */ }
+
     // 3. Exibe a tela de login
     loginOverlay.classList.add('visible');
   });
@@ -3257,4 +3262,4 @@
 
     if (acertos === 12)       faixa = '🏆 Parabéns! Você acertou TODAS as questões!';
 
-    else if (acertos >= 10)   faixa = '🥇 Excelente! Você atingiu a f
+  
