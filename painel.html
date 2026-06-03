@@ -654,6 +654,14 @@
 
 
 
+    .btn-encerrar{background:linear-gradient(135deg,rgba(180,30,30,0.25),rgba(120,20,20,0.35));color:#ff6b6b;border-color:rgba(255,80,80,0.5);font-weight:600;letter-spacing:0.22em;}
+
+    .btn-encerrar:hover{background:linear-gradient(135deg,rgba(200,40,40,0.35),rgba(140,25,25,0.45));border-color:#ff6b6b;box-shadow:0 0 12px rgba(255,80,80,0.2);}
+
+    .btn-encerrar.encerrado{background:rgba(50,50,50,0.4);color:var(--text-muted);border-color:rgba(255,255,255,0.15);cursor:not-allowed;}
+
+
+
 
 
 
@@ -1104,8 +1112,6 @@
 
       <button class="btn btn-liberar-inscricoes" id="btnLiberarInscricoes">LIBERAR INSCRIÇÕES</button>
 
-      <button class="btn" id="btnEncerrarSeminario" style="background:rgba(224,92,92,0.12);border:1px solid rgba(224,92,92,0.4);color:#e05c5c;letter-spacing:0.18em;">⚑ ENCERRAR SEMINÁRIO</button>
-
 
 
       <button class="btn btn-email-todos"        id="btnEnviarEmailTodos">✉ LEMBRETE — TODOS</button>
@@ -1137,6 +1143,8 @@
 
 
       <button class="btn btn-voltar" id="voltarBtn">VOLTAR</button>
+
+      <button class="btn btn-encerrar" id="btnEncerrarSeminario">⏹ ENCERRAR SEMINÁRIO</button>
 
 
 
@@ -1590,11 +1598,6 @@
 
         atualizarModoBadge(!!dados.horasLiberadas);
 
-        if (dados.seminarioEncerrado === true) {
-          const btnEnc = document.getElementById('btnEncerrarSeminario');
-          if (btnEnc) { btnEnc.textContent = 'SEMINÁRIO ENCERRADO ✓'; btnEnc.disabled = true; }
-        }
-
 
 
 
@@ -2012,19 +2015,6 @@
 
 
 
-
-    // ── ENCERRAR SEMINÁRIO ──────────────────────────────────────────────────
-    document.getElementById('btnEncerrarSeminario').addEventListener('click', async () => {
-      if (!confirm('Encerrar o seminário? A tela de inscrições será substituída pela mensagem de encerramento.')) return;
-      try {
-        const ref = doc(db, 'configuracoes', 'painel');
-        await setDoc(ref, { seminarioEncerrado: true }, { merge: true });
-        const btn = document.getElementById('btnEncerrarSeminario');
-        btn.textContent = 'SEMINÁRIO ENCERRADO ✓';
-        btn.disabled = true;
-        showToast('✦ Seminário encerrado! A tela de encerramento já está ativa.');
-      } catch(err) { console.error(err); showToast('Erro ao encerrar.'); }
-    });
 
     // ── CARREGAR INSCRITOS EM TEMPO REAL ───────────────────────────────────────
 
@@ -3813,6 +3803,45 @@
 
 
 
+
+    // ── ENCERRAR SEMINÁRIO ────────────────────────────────────────────────────
+    async function carregarEstadoEncerramento() {
+      try {
+        const ref  = doc(db, 'configuracoes', 'painel');
+        const snap = await getDoc(ref);
+        if (snap.exists() && snap.data().seminarioEncerrado === true) {
+          const btn = document.getElementById('btnEncerrarSeminario');
+          btn.textContent = '✓ SEMINÁRIO ENCERRADO';
+          btn.classList.add('encerrado');
+          btn.disabled = true;
+        }
+      } catch(e) { console.error(e); }
+    }
+    carregarEstadoEncerramento();
+
+    document.getElementById('btnEncerrarSeminario').addEventListener('click', async () => {
+      const btn = document.getElementById('btnEncerrarSeminario');
+      if (btn.disabled) return;
+
+      const confirmar = confirm('Tem certeza que deseja encerrar o seminário?\n\nIsso irá exibir a tela de agradecimentos para todos os participantes no site de inscrições.\n\nEsta ação não pode ser desfeita facilmente.');
+      if (!confirmar) return;
+
+      btn.disabled    = true;
+      btn.textContent = 'ENCERRANDO…';
+
+      try {
+        const ref = doc(db, 'configuracoes', 'painel');
+        await setDoc(ref, { seminarioEncerrado: true }, { merge: true });
+        btn.textContent = '✓ SEMINÁRIO ENCERRADO';
+        btn.classList.add('encerrado');
+        showToast('✓ Seminário encerrado! A tela de agradecimentos está ativa.');
+      } catch(err) {
+        console.error(err);
+        btn.disabled    = false;
+        btn.textContent = '⏹ ENCERRAR SEMINÁRIO';
+        showToast('Erro ao encerrar. Tente novamente.');
+      }
+    });
 
     // ── VOLTAR ─────────────────────────────────────────────────────────────────
     document.getElementById('voltarBtn').addEventListener('click', async () => {
