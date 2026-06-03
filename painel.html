@@ -1588,11 +1588,10 @@
 
         atualizarModoBadge(!!dados.horasLiberadas);
 
-        // Reflete estado de encerramento no botão
+        // Reflete encerramento no botão
         if (dados.inscricoesBloqueadas === true) {
           const btnInsc = document.getElementById('btnLiberarInscricoes');
-          btnInsc.textContent = 'INSCRIÇÕES ENCERRADAS ✓';
-          btnInsc.disabled = true;
+          if (btnInsc) { btnInsc.textContent = 'INSCRIÇÕES ENCERRADAS ✓'; btnInsc.disabled = true; }
         }
 
 
@@ -1973,40 +1972,28 @@
 
 
 
-        const dados = snap.exists() ? snap.data() : {};
-        const horasAtivo = !!dados.horasLiberadas;
-        const jaBloqueadas = !!dados.inscricoesBloqueadas;
+        const dadosSnap = snap.exists() ? snap.data() : {};
+        const horasAtivo = !!dadosSnap.horasLiberadas;
+        const jaBloqueadas = !!dadosSnap.inscricoesBloqueadas;
 
-        // Se as inscrições já estão abertas (horasLiberadas=false), bloquear definitivamente
+        // Se inscrições abertas: bloquear definitivamente
         if (!horasAtivo && !jaBloqueadas) {
-          // BLOQUEAR: encerra inscrições definitivamente
           await setDoc(ref, { inscricoesBloqueadas: true }, { merge: true });
-          document.getElementById('btnLiberarInscricoes').textContent = 'INSCRIÇÕES ENCERRADAS ✓';
-          document.getElementById('btnLiberarInscricoes').disabled = true;
-          showToast('✦ Inscrições encerradas. A tela de encerramento já está ativa!');
+          const btnInsc = document.getElementById('btnLiberarInscricoes');
+          if (btnInsc) { btnInsc.textContent = 'INSCRIÇÕES ENCERRADAS ✓'; btnInsc.disabled = true; }
+          showToast('❖ Inscrições encerradas! A tela de encerramento já está ativa.');
           return;
         }
 
-        // Comportamento original (toggle horas/inscrições quando horasLiberadas está ativo)
         const novo = !horasAtivo;
-
-
 
         await setDoc(ref, { horasLiberadas: novo }, { merge: true });
 
-
-
         atualizarBtnHoras(novo);
-
-
 
         atualizarBtnInscricoes(novo);
 
-
-
         atualizarModoBadge(novo);
-
-
 
         showToast(novo ? 'Modo horas ativo — inscrições bloqueadas.' : 'Modo inscrições ativo.');
 
