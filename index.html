@@ -1260,6 +1260,42 @@
       font-style: italic;
       letter-spacing: 0.06em;
     }
+    .encerrado-horas-wrap {
+      margin: 36px auto 0;
+      padding: 32px;
+      border: 1px solid rgba(212,175,85,0.25);
+      border-radius: 10px;
+      background: rgba(212,175,85,0.04);
+      max-width: 480px;
+    }
+    .encerrado-horas-titulo {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 10px;
+    }
+    .encerrado-horas-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+    #btnReceberHoras {
+      background: var(--gold);
+      color: #000;
+      border: none;
+      padding: 16px 36px;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      border-radius: 3px;
+      transition: 0.2s;
+      font-size: 12px;
+      width: 100%;
+    }
+    #btnReceberHoras:hover { background: var(--gold-light); transform: translateY(-2px); }
 
     @keyframes fadeIn { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -3282,9 +3318,27 @@
 
   });
 
+  // ── BOTÃO RECEBER HORAS (tela encerramento) ──────────────────────────────
+  document.addEventListener('DOMContentLoaded', () => {
+    const btnRH = document.getElementById('btnReceberHoras');
+    if (btnRH) {
+      btnRH.addEventListener('click', () => {
+        // Oculta tela de encerramento
+        document.getElementById('encerradoContainer').classList.remove('visible');
+        // Mostra o form-container com o hcContainer
+        document.querySelector('.form-container').style.display = 'block';
+        const hcContainer = document.getElementById('hcContainer');
+        hcContainer.classList.add('visible');
+        // Esconde o formulário de inscrição
+        const inscricaoForm = document.getElementById('inscricaoForm');
+        if (inscricaoForm) inscricaoForm.style.display = 'none';
+        // Scroll suave
+        hcContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    }
+  });
+
 </script>
-
-
 
 <!-- ══ TELA DE ENCERRAMENTO ══ -->
 <div id="encerradoContainer">
@@ -3304,6 +3358,12 @@
     Até o próximo seminário!
   </p>
   <div class="encerrado-assinatura">Equipe de Extensão · UFRRJ/IM · 2026-1</div>
+
+  <div class="encerrado-horas-wrap">
+    <div class="encerrado-horas-titulo">◈ Horas Complementares</div>
+    <p class="encerrado-horas-desc">Se você participou do seminário, clique abaixo para registrar sua presença e receber suas horas complementares.</p>
+    <button id="btnReceberHoras">✦ Receber Horas Complementares</button>
+  </div>
 </div>
 
 </body>
