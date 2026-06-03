@@ -144,6 +144,25 @@
     #hcLoginErro { font-size: 11px; color: var(--error); min-height: 16px; }
   </style>
 
+  <div id="hcLoginOverlay">
+    <div class="hc-login-box">
+      <div class="hc-login-title">Acesso Restrito</div>
+      <p class="hc-login-sub">Esta área é exclusiva para o organizador do evento. Faça login com suas credenciais para liberar as horas complementares.</p>
+      <div>
+        <div class="hc-login-label">E-mail</div>
+        <input type="email" id="hcLoginEmail" placeholder="seu@email.com" autocomplete="username">
+      </div>
+      <div>
+        <div class="hc-login-label">Senha</div>
+        <input type="password" id="hcLoginSenha" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <div id="hcLoginErro"></div>
+      <button class="btn-submit" id="hcLoginBtn" style="width:100%;margin-top:4px;">ENTRAR</button>
+    </div>
+  </div>
+
+
+
   <link rel="preconnect" href="https://fonts.googleapis.com" />
 
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
@@ -1287,22 +1306,7 @@
 
 <body>
 
-<div id="hcLoginOverlay">
-  <div class="hc-login-box">
-    <div class="hc-login-title">Acesso Restrito</div>
-    <p class="hc-login-sub">Esta área é exclusiva para o organizador do evento. Faça login com suas credenciais para liberar as horas complementares.</p>
-    <div>
-      <div class="hc-login-label">E-mail</div>
-      <input type="email" id="hcLoginEmail" placeholder="seu@email.com" autocomplete="username">
-    </div>
-    <div>
-      <div class="hc-login-label">Senha</div>
-      <input type="password" id="hcLoginSenha" placeholder="••••••••" autocomplete="current-password">
-    </div>
-    <div id="hcLoginErro"></div>
-    <button class="btn-submit" id="hcLoginBtn" style="width:100%;margin-top:4px;">ENTRAR</button>
-  </div>
-</div>
+
 
 <header>
 
@@ -2085,9 +2089,7 @@
   <div id="encerramentoPanel">
     <img src="capivaraagente.png" alt="Mascote" class="enc-capivara">
     <div class="enc-badge">✦ Seminário Encerrado · 2026-1</div>
-    <h1 class="enc-title">
-      Inscrições<br><em>Encerradas</em>
-    </h1>
+    <h1 class="enc-title">Inscrições<br><em>Encerradas</em></h1>
     <p class="enc-message">
       O período de inscrições para o <strong>Seminário de Extensão — 3° Período</strong>
       foi encerrado oficialmente.<br><br>
@@ -2429,30 +2431,38 @@
 
       const dados = configSnap.data();
 
-      const form             = document.getElementById('inscricaoForm');
-      const hcContainer      = document.getElementById('hcContainer');
-      const title            = document.getElementById('mainTitle');
-      const subtitle         = document.getElementById('mainSubtitle');
-      const dateRow          = document.getElementById('eventDateRow');
-      const quizLocked       = document.getElementById('quizLocked');
-      const quizBody         = document.getElementById('quizBody');
-      const loginOverlay     = document.getElementById('hcLoginOverlay');
+      const form        = document.getElementById('inscricaoForm');
+
+      const hcContainer = document.getElementById('hcContainer');
+
+      const title       = document.getElementById('mainTitle');
+
+      const subtitle    = document.getElementById('mainSubtitle');
+
+      const dateRow     = document.getElementById('eventDateRow');
+
+      const quizLocked  = document.getElementById('quizLocked');
+
+      const quizBody    = document.getElementById('quizBody');
+
+      const loginOverlay = document.getElementById('hcLoginOverlay');
+
       const encerramentoPanel = document.getElementById('encerramentoPanel');
 
       // 0. INSCRIÇÕES BLOQUEADAS — Encerramento definitivo
       if (dados.inscricoesBloqueadas === true) {
-        if (loginOverlay.getAttribute('data-manual') !== 'true') {
+        if (loginOverlay && loginOverlay.getAttribute('data-manual') !== 'true') {
           loginOverlay.classList.remove('visible');
         }
-        form.style.display = 'none';
+        if (form) form.style.display = 'none';
         if (dateRow) dateRow.style.display = 'none';
-        hcContainer.classList.remove('visible');
-        encerramentoPanel.classList.add('visible');
-        title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
-        subtitle.innerHTML = '';
-        return; // Para aqui — não processa mais nada
+        if (hcContainer) hcContainer.classList.remove('visible');
+        if (encerramentoPanel) encerramentoPanel.classList.add('visible');
+        if (title) title.innerHTML = 'Seminário de Extensão<br><em>3° Período</em>';
+        if (subtitle) subtitle.innerHTML = '';
+        return;
       } else {
-        encerramentoPanel.classList.remove('visible');
+        if (encerramentoPanel) encerramentoPanel.classList.remove('visible');
       }
 
       // Valida token: precisa existir na URL, bater com o Firestore e não ter expirado
@@ -2563,18 +2573,13 @@
   // ── BOTÃO PAINEL ──────────────────────────────────────────────────────────
   document.getElementById('adminBtn').addEventListener('click', async () => {
     const loginOverlay = document.getElementById('hcLoginOverlay');
-    if (!loginOverlay) return;
-
-    // 1. Marca que o modal foi aberto pelo botão
+    
+    // 1. Marca que o modal foi aberto pelo botão (impede a Correção 1 de fechá-lo no celular)
     loginOverlay.setAttribute('data-manual', 'true');
-
-    // 2. Tenta fazer logout (se auth estiver pronto)
-    try {
-      if (window.auth && window.signOut) {
-        await window.signOut(window.auth);
-      }
-    } catch (e) { /* ignora erros de logout */ }
-
+    
+    // 2. FORÇA o logout imediato para garantir que a senha seja exigida SEMPRE
+    await window.signOut(window.auth);
+    
     // 3. Exibe a tela de login
     loginOverlay.classList.add('visible');
   });
@@ -3262,4 +3267,6 @@
 
     if (acertos === 12)       faixa = '🏆 Parabéns! Você acertou TODAS as questões!';
 
-  
+    else if (acertos >= 10)   faixa = '🥇 Excelente! Você atingiu a faixa de 10–11 acertos.';
+
+    else if (a
