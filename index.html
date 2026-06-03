@@ -144,25 +144,6 @@
     #hcLoginErro { font-size: 11px; color: var(--error); min-height: 16px; }
   </style>
 
-  <div id="hcLoginOverlay">
-    <div class="hc-login-box">
-      <div class="hc-login-title">Acesso Restrito</div>
-      <p class="hc-login-sub">Esta área é exclusiva para o organizador do evento. Faça login com suas credenciais para liberar as horas complementares.</p>
-      <div>
-        <div class="hc-login-label">E-mail</div>
-        <input type="email" id="hcLoginEmail" placeholder="seu@email.com" autocomplete="username">
-      </div>
-      <div>
-        <div class="hc-login-label">Senha</div>
-        <input type="password" id="hcLoginSenha" placeholder="••••••••" autocomplete="current-password">
-      </div>
-      <div id="hcLoginErro"></div>
-      <button class="btn-submit" id="hcLoginBtn" style="width:100%;margin-top:4px;">ENTRAR</button>
-    </div>
-  </div>
-
-
-
   <link rel="preconnect" href="https://fonts.googleapis.com" />
 
   <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
@@ -1306,7 +1287,22 @@
 
 <body>
 
-
+<div id="hcLoginOverlay">
+  <div class="hc-login-box">
+    <div class="hc-login-title">Acesso Restrito</div>
+    <p class="hc-login-sub">Esta área é exclusiva para o organizador do evento. Faça login com suas credenciais para liberar as horas complementares.</p>
+    <div>
+      <div class="hc-login-label">E-mail</div>
+      <input type="email" id="hcLoginEmail" placeholder="seu@email.com" autocomplete="username">
+    </div>
+    <div>
+      <div class="hc-login-label">Senha</div>
+      <input type="password" id="hcLoginSenha" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div id="hcLoginErro"></div>
+    <button class="btn-submit" id="hcLoginBtn" style="width:100%;margin-top:4px;">ENTRAR</button>
+  </div>
+</div>
 
 <header>
 
@@ -3261,4 +3257,4 @@
 
     if (acertos === 12)       faixa = '🏆 Parabéns! Você acertou TODAS as questões!';
 
-    else if (acertos >= 10)  
+    else if (acertos >= 10)   faixa = '🥇 Excelente! Você atingiu a f
