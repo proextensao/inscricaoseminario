@@ -2532,7 +2532,7 @@
 
   verificarConfig();
 
-  setInterval(verificarConfig, 3000);
+  window._verificarConfigInterval = setInterval(verificarConfig, 3000);
 
  // Gerencia o estado e redireciona ao painel SOMENTE após o login manual
   window.onAuthStateChanged(window.auth, (user) => {
@@ -3323,20 +3323,38 @@
   });
 
   // ── BOTÃO RECEBER HORAS (tela encerramento) ──────────────────────────────
-  document.getElementById('btnReceberHoras').addEventListener('click', () => {
-    window._mostrandoHorasEncerrado = true; // impede o setInterval de reverter
-    document.getElementById('encerradoContainer').classList.remove('visible');
-    document.querySelector('.form-container').style.display = 'block';
-    const hcContainer = document.getElementById('hcContainer');
-    hcContainer.classList.add('visible');
-    const inscricaoForm = document.getElementById('inscricaoForm');
-    if (inscricaoForm) inscricaoForm.style.display = 'none';
-    // Libera o quiz automaticamente (seminário já encerrado, quiz deve estar disponível)
-    const quizLocked = document.getElementById('quizLocked');
-    const quizBody   = document.getElementById('quizBody');
-    if (quizLocked) quizLocked.style.display = 'none';
-    if (quizBody)   quizBody.classList.add('visible');
-    hcContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // Usar window.onload garante que o DOM e os outros scripts já carregaram
+  window.addEventListener('load', () => {
+    const btnRH = document.getElementById('btnReceberHoras');
+    if (!btnRH) return;
+    btnRH.addEventListener('click', () => {
+      // Para o polling completamente — sem mais interferência
+      if (window._verificarConfigInterval) {
+        clearInterval(window._verificarConfigInterval);
+        window._verificarConfigInterval = null;
+      }
+      window._mostrandoHorasEncerrado = true;
+
+      // Oculta encerramento
+      document.getElementById('encerradoContainer').classList.remove('visible');
+
+      // Mostra hcContainer
+      document.querySelector('.form-container').style.display = 'block';
+      const hcContainer = document.getElementById('hcContainer');
+      hcContainer.classList.add('visible');
+
+      // Esconde formulário de inscrição
+      const inscricaoForm = document.getElementById('inscricaoForm');
+      if (inscricaoForm) inscricaoForm.style.display = 'none';
+
+      // Libera o quiz diretamente (seminário encerrado = quiz liberado)
+      const quizLocked = document.getElementById('quizLocked');
+      const quizBody   = document.getElementById('quizBody');
+      if (quizLocked) quizLocked.style.display = 'none';
+      if (quizBody)   quizBody.classList.add('visible');
+
+      hcContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   });
 
 </script>
