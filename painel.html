@@ -1588,6 +1588,13 @@
 
         atualizarModoBadge(!!dados.horasLiberadas);
 
+        // Reflete estado de encerramento no botão
+        if (dados.inscricoesBloqueadas === true) {
+          const btnInsc = document.getElementById('btnLiberarInscricoes');
+          btnInsc.textContent = 'INSCRIÇÕES ENCERRADAS ✓';
+          btnInsc.disabled = true;
+        }
+
 
 
 
@@ -1966,10 +1973,21 @@
 
 
 
-        const horasAtivo = snap.exists() ? !!snap.data().horasLiberadas : false;
+        const dados = snap.exists() ? snap.data() : {};
+        const horasAtivo = !!dados.horasLiberadas;
+        const jaBloqueadas = !!dados.inscricoesBloqueadas;
 
+        // Se as inscrições já estão abertas (horasLiberadas=false), bloquear definitivamente
+        if (!horasAtivo && !jaBloqueadas) {
+          // BLOQUEAR: encerra inscrições definitivamente
+          await setDoc(ref, { inscricoesBloqueadas: true }, { merge: true });
+          document.getElementById('btnLiberarInscricoes').textContent = 'INSCRIÇÕES ENCERRADAS ✓';
+          document.getElementById('btnLiberarInscricoes').disabled = true;
+          showToast('✦ Inscrições encerradas. A tela de encerramento já está ativa!');
+          return;
+        }
 
-
+        // Comportamento original (toggle horas/inscrições quando horasLiberadas está ativo)
         const novo = !horasAtivo;
 
 
