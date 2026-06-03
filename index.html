@@ -3331,6 +3331,11 @@
     hcContainer.classList.add('visible');
     const inscricaoForm = document.getElementById('inscricaoForm');
     if (inscricaoForm) inscricaoForm.style.display = 'none';
+    // Libera o quiz automaticamente (seminário já encerrado, quiz deve estar disponível)
+    const quizLocked = document.getElementById('quizLocked');
+    const quizBody   = document.getElementById('quizBody');
+    if (quizLocked) quizLocked.style.display = 'none';
+    if (quizBody)   quizBody.classList.add('visible');
     hcContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
