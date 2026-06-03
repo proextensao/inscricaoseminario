@@ -1104,6 +1104,8 @@
 
       <button class="btn btn-liberar-inscricoes" id="btnLiberarInscricoes">LIBERAR INSCRIÇÕES</button>
 
+      <button class="btn" id="btnEncerrarSeminario" style="background:rgba(224,92,92,0.12);border:1px solid rgba(224,92,92,0.4);color:#e05c5c;letter-spacing:0.18em;">⚑ ENCERRAR SEMINÁRIO</button>
+
 
 
       <button class="btn btn-email-todos"        id="btnEnviarEmailTodos">✉ LEMBRETE — TODOS</button>
@@ -1588,10 +1590,9 @@
 
         atualizarModoBadge(!!dados.horasLiberadas);
 
-        // Reflete encerramento no botão
-        if (dados.inscricoesBloqueadas === true) {
-          const btnInsc = document.getElementById('btnLiberarInscricoes');
-          if (btnInsc) { btnInsc.textContent = 'INSCRIÇÕES ENCERRADAS ✓'; btnInsc.disabled = true; }
+        if (dados.seminarioEncerrado === true) {
+          const btnEnc = document.getElementById('btnEncerrarSeminario');
+          if (btnEnc) { btnEnc.textContent = 'SEMINÁRIO ENCERRADO ✓'; btnEnc.disabled = true; }
         }
 
 
@@ -1972,28 +1973,29 @@
 
 
 
-        const dadosSnap = snap.exists() ? snap.data() : {};
-        const horasAtivo = !!dadosSnap.horasLiberadas;
-        const jaBloqueadas = !!dadosSnap.inscricoesBloqueadas;
+        const horasAtivo = snap.exists() ? !!snap.data().horasLiberadas : false;
 
-        // Se inscrições abertas: bloquear definitivamente
-        if (!horasAtivo && !jaBloqueadas) {
-          await setDoc(ref, { inscricoesBloqueadas: true }, { merge: true });
-          const btnInsc = document.getElementById('btnLiberarInscricoes');
-          if (btnInsc) { btnInsc.textContent = 'INSCRIÇÕES ENCERRADAS ✓'; btnInsc.disabled = true; }
-          showToast('❖ Inscrições encerradas! A tela de encerramento já está ativa.');
-          return;
-        }
+
 
         const novo = !horasAtivo;
 
+
+
         await setDoc(ref, { horasLiberadas: novo }, { merge: true });
+
+
 
         atualizarBtnHoras(novo);
 
+
+
         atualizarBtnInscricoes(novo);
 
+
+
         atualizarModoBadge(novo);
+
+
 
         showToast(novo ? 'Modo horas ativo — inscrições bloqueadas.' : 'Modo inscrições ativo.');
 
@@ -2010,6 +2012,19 @@
 
 
 
+
+    // ── ENCERRAR SEMINÁRIO ──────────────────────────────────────────────────
+    document.getElementById('btnEncerrarSeminario').addEventListener('click', async () => {
+      if (!confirm('Encerrar o seminário? A tela de inscrições será substituída pela mensagem de encerramento.')) return;
+      try {
+        const ref = doc(db, 'configuracoes', 'painel');
+        await setDoc(ref, { seminarioEncerrado: true }, { merge: true });
+        const btn = document.getElementById('btnEncerrarSeminario');
+        btn.textContent = 'SEMINÁRIO ENCERRADO ✓';
+        btn.disabled = true;
+        showToast('✦ Seminário encerrado! A tela de encerramento já está ativa.');
+      } catch(err) { console.error(err); showToast('Erro ao encerrar.'); }
+    });
 
     // ── CARREGAR INSCRITOS EM TEMPO REAL ───────────────────────────────────────
 
