@@ -3323,10 +3323,9 @@
   });
 
   // ── BOTÃO RECEBER HORAS (tela encerramento) ──────────────────────────────
-  // Usar window.onload garante que o DOM e os outros scripts já carregaram
-  window.addEventListener('load', () => {
-    const btnRH = document.getElementById('btnReceberHoras');
-    if (!btnRH) return;
+  // scripts type="module" já rodam com defer, DOM está pronto aqui
+  const btnRH = document.getElementById('btnReceberHoras');
+  if (btnRH) {
     btnRH.addEventListener('click', () => {
       // Para o polling completamente — sem mais interferência
       if (window._verificarConfigInterval) {
@@ -3355,7 +3354,7 @@
 
       hcContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
     });
-  });
+  }
 
 </script>
 
