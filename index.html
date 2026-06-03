@@ -2425,6 +2425,8 @@
   // Lê o token da URL uma única vez
   const _urlToken = new URLSearchParams(window.location.search).get('token');
 
+  let _mostrandoHorasEncerrado = false; // flag: usuário clicou em "Receber Horas" na tela encerrada
+
   async function verificarConfig() {
 
     try {
@@ -2463,6 +2465,8 @@
       // 0. SEMINÁRIO ENCERRADO
       const encerradoEl = document.getElementById('encerradoContainer');
       if (dados.seminarioEncerrado === true) {
+        // Se o usuário clicou em "Receber Horas", não interferir na exibição
+        if (_mostrandoHorasEncerrado) return;
         form.style.display = 'none';
         if (dateRow) dateRow.style.display = 'none';
         hcContainer.classList.remove('visible');
@@ -3324,6 +3328,7 @@
     if (btnRH) {
       btnRH.addEventListener('click', () => {
         // Oculta tela de encerramento
+        _mostrandoHorasEncerrado = true; // impede o setInterval de reverter
         document.getElementById('encerradoContainer').classList.remove('visible');
         // Mostra o form-container com o hcContainer
         document.querySelector('.form-container').style.display = 'block';
