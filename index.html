@@ -2425,7 +2425,7 @@
   // Lê o token da URL uma única vez
   const _urlToken = new URLSearchParams(window.location.search).get('token');
 
-  let _mostrandoHorasEncerrado = false; // flag: usuário clicou em "Receber Horas" na tela encerrada
+  window._mostrandoHorasEncerrado = false; // flag: usuário clicou em "Receber Horas" na tela encerrada
 
   async function verificarConfig() {
 
@@ -2466,7 +2466,7 @@
       const encerradoEl = document.getElementById('encerradoContainer');
       if (dados.seminarioEncerrado === true) {
         // Se o usuário clicou em "Receber Horas", não interferir na exibição
-        if (_mostrandoHorasEncerrado) return;
+        if (window._mostrandoHorasEncerrado) return;
         form.style.display = 'none';
         if (dateRow) dateRow.style.display = 'none';
         hcContainer.classList.remove('visible');
@@ -3323,24 +3323,15 @@
   });
 
   // ── BOTÃO RECEBER HORAS (tela encerramento) ──────────────────────────────
-  document.addEventListener('DOMContentLoaded', () => {
-    const btnRH = document.getElementById('btnReceberHoras');
-    if (btnRH) {
-      btnRH.addEventListener('click', () => {
-        // Oculta tela de encerramento
-        _mostrandoHorasEncerrado = true; // impede o setInterval de reverter
-        document.getElementById('encerradoContainer').classList.remove('visible');
-        // Mostra o form-container com o hcContainer
-        document.querySelector('.form-container').style.display = 'block';
-        const hcContainer = document.getElementById('hcContainer');
-        hcContainer.classList.add('visible');
-        // Esconde o formulário de inscrição
-        const inscricaoForm = document.getElementById('inscricaoForm');
-        if (inscricaoForm) inscricaoForm.style.display = 'none';
-        // Scroll suave
-        hcContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      });
-    }
+  document.getElementById('btnReceberHoras').addEventListener('click', () => {
+    window._mostrandoHorasEncerrado = true; // impede o setInterval de reverter
+    document.getElementById('encerradoContainer').classList.remove('visible');
+    document.querySelector('.form-container').style.display = 'block';
+    const hcContainer = document.getElementById('hcContainer');
+    hcContainer.classList.add('visible');
+    const inscricaoForm = document.getElementById('inscricaoForm');
+    if (inscricaoForm) inscricaoForm.style.display = 'none';
+    hcContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
 
 </script>
