@@ -1165,6 +1165,89 @@
 
 
 
+    /* ── TELA DE ENCERRAMENTO ── */
+
+    #encerramentoPanel {
+      display: none;
+      text-align: center;
+      padding: 60px 24px 80px;
+      animation: fadeIn 0.8s ease;
+      position: relative;
+      z-index: 1;
+    }
+
+    #encerramentoPanel.visible { display: block; }
+
+    .enc-capivara {
+      width: clamp(160px, 28vw, 240px);
+      height: auto;
+      filter: drop-shadow(0 12px 40px rgba(212,175,85,0.35));
+      animation: floatCap 3s ease-in-out infinite;
+      margin-bottom: 32px;
+    }
+
+    @keyframes floatCap {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-12px); }
+    }
+
+    .enc-badge {
+      display: inline-block;
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--gold);
+      border: 1px solid rgba(212,175,85,0.35);
+      padding: 5px 16px;
+      margin-bottom: 28px;
+    }
+
+    .enc-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(2.2rem, 7vw, 4.2rem);
+      font-weight: 300;
+      line-height: 1.1;
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    .enc-title em { color: var(--gold); font-style: italic; }
+
+    .enc-message {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.9;
+      letter-spacing: 0.06em;
+      max-width: 480px;
+      margin: 0 auto 36px;
+    }
+
+    .enc-message strong { color: var(--gold-light); }
+
+    .enc-divider {
+      width: 120px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 32px;
+      opacity: 0.4;
+    }
+
+    .enc-bye {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 1.5rem;
+      font-weight: 300;
+      color: var(--gold);
+      letter-spacing: 0.08em;
+      font-style: italic;
+    }
+
+    .enc-stars {
+      font-size: 18px;
+      letter-spacing: 12px;
+      color: rgba(212,175,85,0.4);
+      margin-top: 24px;
+    }
+
     /* ── TÍTULO CAPIVARA ── */
 
     .title-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; }
@@ -2001,6 +2084,25 @@
 
 
 
+  <!-- ══════════════════════ ENCERRAMENTO ══════════════════════ -->
+
+  <div id="encerramentoPanel">
+    <img src="capivaraagente.png" alt="Mascote" class="enc-capivara">
+    <div class="enc-badge">✦ Seminário Encerrado · 2026-1</div>
+    <h1 class="enc-title">
+      Inscrições<br><em>Encerradas</em>
+    </h1>
+    <p class="enc-message">
+      O período de inscrições para o <strong>Seminário de Extensão — 3° Período</strong>
+      foi encerrado oficialmente.<br><br>
+      Foi um evento incrível e estamos muito felizes com cada presença!
+      A capivara agradece e já está descansando para a próxima edição. 🌿
+    </p>
+    <div class="enc-divider"></div>
+    <div class="enc-bye">Nos vemos no próximo evento!</div>
+    <div class="enc-stars">✦ &nbsp; ✦ &nbsp; ✦</div>
+  </div>
+
   <!-- SUCESSO INSCRIÇÃO -->
 
   <div class="success-panel" id="successPanel">
@@ -2331,21 +2433,31 @@
 
       const dados = configSnap.data();
 
-      const form        = document.getElementById('inscricaoForm');
+      const form             = document.getElementById('inscricaoForm');
+      const hcContainer      = document.getElementById('hcContainer');
+      const title            = document.getElementById('mainTitle');
+      const subtitle         = document.getElementById('mainSubtitle');
+      const dateRow          = document.getElementById('eventDateRow');
+      const quizLocked       = document.getElementById('quizLocked');
+      const quizBody         = document.getElementById('quizBody');
+      const loginOverlay     = document.getElementById('hcLoginOverlay');
+      const encerramentoPanel = document.getElementById('encerramentoPanel');
 
-      const hcContainer = document.getElementById('hcContainer');
-
-      const title       = document.getElementById('mainTitle');
-
-      const subtitle    = document.getElementById('mainSubtitle');
-
-      const dateRow     = document.getElementById('eventDateRow');
-
-      const quizLocked  = document.getElementById('quizLocked');
-
-      const quizBody    = document.getElementById('quizBody');
-
-      const loginOverlay = document.getElementById('hcLoginOverlay');
+      // 0. INSCRIÇÕES BLOQUEADAS — Encerramento definitivo
+      if (dados.inscricoesBloqueadas === true) {
+        if (loginOverlay.getAttribute('data-manual') !== 'true') {
+          loginOverlay.classList.remove('visible');
+        }
+        form.style.display = 'none';
+        if (dateRow) dateRow.style.display = 'none';
+        hcContainer.classList.remove('visible');
+        encerramentoPanel.classList.add('visible');
+        title.innerHTML    = 'Seminário de Extensão<br><em>3° Período</em>';
+        subtitle.innerHTML = '';
+        return; // Para aqui — não processa mais nada
+      } else {
+        encerramentoPanel.classList.remove('visible');
+      }
 
       // Valida token: precisa existir na URL, bater com o Firestore e não ter expirado
       let tokenValido = false;
@@ -3149,58 +3261,4 @@
 
     if (acertos === 12)       faixa = '🏆 Parabéns! Você acertou TODAS as questões!';
 
-    else if (acertos >= 10)   faixa = '🥇 Excelente! Você atingiu a faixa de 10–11 acertos.';
-
-    else if (acertos >= 5)    faixa = '🥈 Bom! Você atingiu a faixa de 5–9 acertos.';
-
-    else                      faixa = `😊 Você acertou ${acertos} questão(ões). Eram necessárias 5 para ganhar horas extras.`;
-
-
-
-    const erros = TOTAL_Q - acertos;
-
-    breakdownEl.innerHTML = `
-
-      <strong>${dadosDoc.nome}</strong>, aqui está seu resultado:<br><br>
-
-      ✅ Acertos: <strong>${acertos}</strong> &nbsp;|&nbsp; ❌ Erros: <strong>${erros}</strong><br><br>
-
-      ${faixa}<br><br>
-
-      <strong>Resumo de horas:</strong><br>
-
-      • Presença no seminário: <strong>5h</strong><br>
-
-      • Bônus pelo questionário: <strong>+${horasExtras}h</strong><br>
-
-      • <strong>Total de horas complementares: ${horasTotal}h</strong><br><br>
-
-      <em style="font-size:10px;color:var(--text-muted);">
-
-        Tabela de referência: 5–9 acertos = +5h · 10–11 acertos = +10h · 12 acertos = +20h
-
-      </em>`;
-
-
-
-    resultEl.classList.add('visible');
-
-    resultEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    // Enviar e-mail com resultado do questionário
-    if (dadosDoc && dadosDoc.email) {
-      enviarEmail({
-        para: dadosDoc.email,
-        nome: dadosDoc.nome,
-        assunto: `✦ Resultado do questionário — ${acertos}/12 acertos · ${5 + horasExtras}h complementares`,
-        html: htmlResultadoHoras({ nome: dadosDoc.nome, acertos, horasExtras, horasTotal, detalhesQuestoes: detalhes, soPres: false })
-      });
-    }
-
-  });
-
-</script>
-
-</body>
-
-</html>
+    else if (acertos >= 10)  
